@@ -1,0 +1,124 @@
+# AiX Decision System - Docker ignore
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+README*
+CHANGELOG*
+LICENSE*
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+Jenkinsfile
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env*
+!.env.example
+
+# Logs
+logs/
+*.log
+log/
+
+# Test files
+tests/
+test/
+__tests__/
+*.test.*
+*.spec.*
+.coverage
+coverage/
+.pytest_cache/
+.tox/
+
+# Node modules (will be installed in container)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Data and models (too large for container)
+data/
+datasets/
+models/
+ml_models/
+ml_experiments/
+*.pkl
+*.joblib
+*.h5
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*.old
+backups/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Docker files (avoid recursion)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Monitoring data
+monitoring/data/
+grafana/data/
+prometheus/data/
+
+# SSL certificates
+ssl/
+certificates/
+*.pem
+*.key
+*.crt
+
+# Local development overrides
+docker-compose.override.yml
+docker-compose.local.yml
+
+# OS files
+.DS_Store
+Thumbs.db

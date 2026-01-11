@@ -1,0 +1,90 @@
+# Backend Docker ignore
+
+# Documentation
+*.md
+docs/
+README*
+
+# Git
+.git
+.gitignore
+
+# Environment files (except example)
+.env*
+!.env.example
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+.env/
+
+# Testing
+tests/
+test/
+*.test.py
+*.spec.py
+.coverage
+coverage/
+.pytest_cache/
+.tox/
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+log/
+
+# Data and models (will be mounted as volumes)
+data/
+datasets/
+models/
+ml_models/
+ml_experiments/
+*.pkl
+*.joblib
+*.h5
+*.pb
+*.onnx
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+backups/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore

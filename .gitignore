@@ -1,0 +1,150 @@
+# AiX Decision System - Root .gitignore
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.staging
+.env.development
+.env.prod
+.env.dev
+*.env
+
+# Sensitive configuration files
+config/secrets.json
+config/production.json
+secrets/
+ssl/
+certificates/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+aix_system.db
+
+# Log files
+logs/
+*.log
+*.log.*
+log/
+
+# Model files and ML artifacts
+models/
+ml_models/
+ml_experiments/
+*.pkl
+*.joblib
+*.h5
+*.pb
+*.onnx
+*.pt
+*.pth
+checkpoints/
+
+# Data files
+data/
+datasets/
+*.csv
+*.json.bak
+*.parquet
+backup*.sql
+dump*.sql
+
+# Docker volumes and data
+docker-data/
+volumes/
+mysql_data/
+redis_data/
+influxdb_data/
+prometheus_data/
+grafana_data/
+elasticsearch_data/
+
+# Backup files
+backups/
+*.backup
+*.bak
+*.tar.gz
+*.zip
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation that might contain sensitive info
+DEPLOYMENT_NOTES.md
+PRODUCTION_SETUP.md
+SECRETS.md
+PASSWORDS.md
+API_KEYS.md
+
+# Monitoring and metrics data
+monitoring/data/
+grafana/data/
+prometheus/data/
+
+# Test artifacts
+test-results/
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Node modules (if any Node.js tools are used)
+node_modules/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Local development overrides
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Performance and profiling
+*.prof
+*.profile
+
+# Security scan results
+security-scan-results/
+vulnerability-reports/

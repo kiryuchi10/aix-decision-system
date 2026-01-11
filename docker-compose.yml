@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: aix-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: aix_root_password
+      MYSQL_DATABASE: aix_decision_db
+      MYSQL_USER: aix_user
+      MYSQL_PASSWORD: aix_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - aix-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: aix-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - aix-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aix-backend
+    environment:
+      - DATABASE_URL=mysql+pymysql://aix_user:aix_password@mysql:3306/aix_decision_db
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./ml_models:/app/ml_models
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - aix-network
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aix-frontend
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - aix-network
+    restart: unless-stopped
+
+  # ML Pipeline Worker
+  ml-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.ml
+    container_name: aix-ml-worker
+    environment:
+      - DATABASE_URL=mysql+pymysql://aix_user:aix_password@mysql:3306/aix_decision_db
+      - REDIS_URL=redis://redis:6379
+      - ML_WORKER=true
+    volumes:
+      - ./backend:/app
+      - ./ml_models:/app/ml_models
+      - ./ml_experiments:/app/ml_experiments
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - aix-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  aix-network:
+    driver: bridge
