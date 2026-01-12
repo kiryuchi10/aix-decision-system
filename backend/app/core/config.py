@@ -7,7 +7,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # Database
-    DATABASE_URL: str = "sqlite:///./aix_system.db"
+    # Default to MySQL if not set in .env
+    DATABASE_URL: str = "mysql+pymysql://root:password@localhost:3306/aix_system"
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379"

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from ..database import get_db
+from ..core.database import get_db
 from ..models.kpi import KPIHourly
 
 router = APIRouter()

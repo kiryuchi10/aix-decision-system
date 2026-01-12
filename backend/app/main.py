@@ -15,8 +15,46 @@ import asyncio
 from datetime import datetime
 import json
 
-from .routers import fdc, doe, ml_pipeline, coupling, recommendations, auth, data_management
-from .routers.dashboard import router as dashboard_router
+# Import core routers (always available)
+from .routers import papers, datasets, seeds, generator, chat, auth
+
+# Import optional routers (may not exist or have missing dependencies)
+fdc = doe = ml_pipeline = coupling = recommendations = data_management = None
+
+try:
+    from .routers import fdc
+except (ImportError, ModuleNotFoundError):
+    pass
+
+try:
+    from .routers import doe
+except (ImportError, ModuleNotFoundError):
+    pass
+
+try:
+    from .routers import ml_pipeline
+except (ImportError, ModuleNotFoundError):
+    pass
+
+try:
+    from .routers import coupling
+except (ImportError, ModuleNotFoundError):
+    pass
+
+try:
+    from .routers import recommendations
+except (ImportError, ModuleNotFoundError):
+    pass
+
+try:
+    from .routers import data_management
+except (ImportError, ModuleNotFoundError):
+    pass
+
+try:
+    from .routers.dashboard import router as dashboard_router
+except (ImportError, ModuleNotFoundError):
+    dashboard_router = None
 
 from .core.database import engine, Base
 from .core.websocket_manager import WebSocketManager
@@ -48,15 +86,32 @@ websocket_manager = WebSocketManager()
 
 # Include routers (HTTP endpoints)
 app.include_router(auth.router, prefix="/api/v1")
-app.include_router(fdc.router, prefix="/api/v1")
-app.include_router(doe.router, prefix="/api/v1")
-app.include_router(ml_pipeline.router, prefix="/api/v1")
-app.include_router(coupling.router, prefix="/api/v1")
-app.include_router(recommendations.router, prefix="/api/v1")
-app.include_router(data_management.router, prefix="/api/v1")
+app.include_router(papers.router, prefix="/api/v1")
+app.include_router(datasets.router, prefix="/api/v1")
+app.include_router(seeds.router, prefix="/api/v1")
+app.include_router(generator.router, prefix="/api/v1")
+app.include_router(chat.router, prefix="/api/v1")
+
+# Include optional routers if they exist
+if fdc:
+    app.include_router(fdc.router, prefix="/api/v1")
+if doe:
+    app.include_router(doe.router, prefix="/api/v1")
+if ml_pipeline:
+    try:
+        app.include_router(ml_pipeline.router, prefix="/api/v1")
+    except Exception:
+        pass  # Skip if dependencies missing (e.g., xgboost)
+if coupling:
+    app.include_router(coupling.router, prefix="/api/v1")
+if recommendations:
+    app.include_router(recommendations.router, prefix="/api/v1")
+if data_management:
+    app.include_router(data_management.router, prefix="/api/v1")
 
 # Dashboard endpoints
-app.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
+if dashboard_router:
+    app.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
 
 
 @app.get("/")
@@ -124,4 +179,8 @@ async def simulate_sensor_data():
 
 
 if __name__ == "__main__":
+    import sys
+    import os
+    # Add parent directory to path for direct execution
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

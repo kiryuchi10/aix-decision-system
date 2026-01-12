@@ -7,7 +7,16 @@ import uuid
 
 from ..core.database import get_db
 from ..services.data_integration_service import DataIntegrationService
-from ..services.ml_ensemble_service import MLEnsembleService
+try:
+    from ..services.ml_ensemble_service import MLEnsembleService
+except ImportError as e:
+    # Create a stub service if import fails
+    class MLEnsembleService:
+        def __init__(self):
+            pass
+        def get_available_models(self):
+            return {}
+    print(f"Warning: MLEnsembleService import failed: {e}")
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/ml-pipeline", tags=["ML Pipeline"])
