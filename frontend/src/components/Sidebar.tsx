@@ -6,7 +6,11 @@ import {
   Activity, 
   Settings, 
   Zap,
-  BarChart3
+  BarChart3,
+  FileText,
+  Database,
+  Sparkles,
+  MessageSquare
 } from 'lucide-react'
 
 const Sidebar: React.FC = () => {
@@ -14,6 +18,10 @@ const Sidebar: React.FC = () => {
   
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Papers', href: '/papers', icon: FileText },
+    { name: 'Datasets', href: '/datasets', icon: Database },
+    { name: 'Generator', href: '/generator', icon: Sparkles },
+    { name: 'Chat', href: '/chat', icon: MessageSquare },
     { name: 'ML Model Comparison', href: '/ml-comparison', icon: Brain },
     { name: 'FDC Monitoring', href: '/fdc', icon: Activity },
     { name: 'DoE Planning', href: '/doe', icon: BarChart3 },

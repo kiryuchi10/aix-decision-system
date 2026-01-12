@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Activity, TrendingUp, Clock, Target, Zap, FlaskConical } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
 import axios from 'axios'
 
 interface KPIData {
@@ -47,7 +47,7 @@ interface Recommendation {
 }
 
 const Dashboard: React.FC = () => {
-  const [kpiData, setKpiData] = useState<KPIData>({
+  const [kpiData] = useState<KPIData>({
     overall_health: 94.2,
     process_cpk: 1.33,
     drift_rate: 0.05,

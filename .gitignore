@@ -148,3 +148,146 @@ docker-compose.local.yml
 # Security scan results
 security-scan-results/
 vulnerability-reports/
+
+########################################
+# 🔐 Security & Secrets (ABSOLUTE)
+########################################
+
+*.md
+!README.md
+!docs/**/*.md
+
+
+# Environment variables
+.env
+.env.*
+*.env
+*.md
+# Secrets & credentials
+**/secrets.*
+**/*secret*
+**/*credentials*
+**/*apikey*
+**/*api_key*
+**/*token*
+**/*password*
+**/*passwd*
+**/*private*
+**/*oauth*
+**/*gmail*
+**/*mail*
+**/*auth*
+
+# Explicit sensitive docs (never commit)
+SECRETS.md
+API_KEYS.md
+PRODUCTION_SETUP.md
+DEPLOYMENT_NOTES.md
+SECURITY.md
+
+########################################
+# 🗄️ Databases & Dumps
+########################################
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+dump*.sql
+backup*.sql
+
+########################################
+# 🧪 Data files (runtime / user)
+########################################
+data/
+datasets/
+uploads/
+downloads/
+*.csv
+*.parquet
+*.json.bak
+
+########################################
+# 🤖 ML / AI artifacts
+########################################
+models/
+ml_models/
+ml_experiments/
+mlruns/
+checkpoints/
+experiments/
+artifacts/
+*.pkl
+*.joblib
+*.h5
+*.onnx
+*.pt
+*.pth
+
+########################################
+# 🐍 Python
+########################################
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+########################################
+# 🌱 Virtual environments
+########################################
+venv/
+env/
+ENV/
+.venv/
+
+########################################
+# 🧪 Testing / Coverage
+########################################
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+test-results/
+
+########################################
+# 📓 Notebooks
+########################################
+.ipynb_checkpoints/
+*.ipynb
+
+########################################
+# 🧠 IDE / Editor
+########################################
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+########################################
+# 🖥️ OS
+########################################
+.DS_Store
+Thumbs.db
+
+########################################
+# 🐳 Docker
+########################################
+.dockerignore.bak
+
+########################################
+# ⚠️ Markdown handling (IMPORTANT)
+########################################
+
+# Ignore ALL markdown by default
+*.md
+
+# ✅ But allow public / safe docs explicitly
+!README.md
+!docs/**/*.md
+!design.md
+!architecture.md
+!CHANGELOG.md

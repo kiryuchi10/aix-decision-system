@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Brain, Play, CheckCircle, AlertCircle, TrendingUp, BarChart3, Layers } from 'lucide-react'
+import { Brain, Play, CheckCircle, AlertCircle, BarChart3, Layers } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts'
 import axios from 'axios'
 
@@ -22,7 +22,7 @@ interface ModelComparison {
 
 const MLModelComparison: React.FC = () => {
   const [availableModels, setAvailableModels] = useState<AvailableModel[]>([])
-  const [selectedModels, setSelectedModels] = useState<string[]>([])
+  //const [selectedModels] = useState<string[]>([])
   const [experimentId, setExperimentId] = useState('EXP-TEST001')
   const [pipelineId, setPipelineId] = useState<string | null>(null)
   const [pipelineStatus, setPipelineStatus] = useState<string>('idle')

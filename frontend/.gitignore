@@ -1,5 +1,10 @@
 # AiX Decision System - Frontend .gitignore
 
+*.md
+!README.md
+!docs/**/*.md
+
+
 # Environment files
 .env
 .env.local
