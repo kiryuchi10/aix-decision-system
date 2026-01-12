@@ -339,3 +339,8 @@ Thumbs.db
 !design.md
 !architecture.md
 !CHANGELOG.md
+
+*.md
+!README.md
+!docs/**/*.md
+
