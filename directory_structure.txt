@@ -1,0 +1,37 @@
+app/
+├─ __init__.py                 # makes "app" importable as a package
+├─ main.py                     # FastAPI app entry: CORS + routers
+├─ core/
+│  ├─ __init__.py
+│  ├─ config.py                # Settings from .env (DATABASE_URL, SECRET_KEY, etc.)
+│  └─ database.py              # SQLAlchemy engine/session + get_db dependency
+├─ models/
+│  ├─ __init__.py              # imports models so Base metadata sees them
+│  ├─ recipe.py                # ORM tables
+│  ├─ sensor.py
+│  ├─ experiment.py
+│  ├─ alarm.py
+│  └─ recommendation.py
+├─ schemas/
+│  ├─ __init__.py              # Pydantic request/response DTOs
+│  ├─ kpi.py
+│  ├─ fdc.py
+│  ├─ doe.py
+│  └─ recommendation.py
+├─ services/
+│  ├─ __init__.py              # business logic lives here (FDC/DoE/Coupling)
+│  ├─ kpi_service.py
+│  ├─ fdc_service.py
+│  ├─ doe_service.py
+│  ├─ coupling_service.py
+│  └─ recommendation_service.py
+├─ routers/
+│  ├─ __init__.py              # router exports
+│  ├─ kpi.py
+│  ├─ fdc.py
+│  ├─ doe.py
+│  ├─ coupling.py
+│  └─ workflow.py
+└─ scripts/
+   ├─ __init__.py
+   └─ seed_import.py           # CSV → DB load
