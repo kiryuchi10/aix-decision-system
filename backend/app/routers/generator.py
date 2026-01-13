@@ -12,6 +12,7 @@ from app.core.database import get_db
 from app.models.user import User, UserRole
 from app.models.synthetic import SyntheticRun
 from app.routers.auth import get_current_user
+from app.services.generator.etch_generator import EtchDataGenerator
 
 router = APIRouter(prefix="/generate", tags=["Generator"])
 
@@ -24,6 +25,9 @@ class GenerateRequest(BaseModel):
     nRuns: int = 100
     timeSeries: bool = False
     saveAsSeedFolder: bool = False
+    include_drift: bool = False
+    include_step_change: bool = False
+    include_intermittent: bool = False
 
 class GenerateResponse(BaseModel):
     run_id: int
@@ -45,30 +49,36 @@ async def generate_synthetic(
     # if current_user.role != UserRole.ADMIN:
     #     raise HTTPException(status_code=403, detail="Permission denied")
     
-    # Generate synthetic data (placeholder implementation)
-    # TODO: Implement actual synthetic data generation
     run_id = uuid.uuid4().hex[:12]
     
-    # Create sample data
-    if request.timeSeries:
-        # Generate time series data
-        dates = pd.date_range(start='2024-01-01', periods=request.nRuns, freq='H')
-        data = {
-            'timestamp': dates,
-            'temperature': [850 + (i % 10) * 0.5 for i in range(request.nRuns)],
-            'pressure': [2.5 + (i % 5) * 0.1 for i in range(request.nRuns)],
-            'yield': [95 + (i % 3) for i in range(request.nRuns)]
-        }
+    # Generate data based on process type
+    if request.processType.lower() == "etch":
+        # Use Etch data generator
+        generator = EtchDataGenerator(seed=42)
+        df = generator.generate_dataset(
+            n_runs=request.nRuns,
+            include_drift=request.include_drift,
+            include_step_change=request.include_step_change,
+            include_intermittent=request.include_intermittent
+        )
     else:
-        # Generate regular data
-        data = {
-            'run_id': [f"RUN-{i:04d}" for i in range(request.nRuns)],
-            'temperature': [850 + (i % 10) * 0.5 for i in range(request.nRuns)],
-            'pressure': [2.5 + (i % 5) * 0.1 for i in range(request.nRuns)],
-            'yield': [95 + (i % 3) for i in range(request.nRuns)]
-        }
-    
-    df = pd.DataFrame(data)
+        # Generate generic data
+        if request.timeSeries:
+            dates = pd.date_range(start='2024-01-01', periods=request.nRuns, freq='H')
+            data = {
+                'timestamp': dates,
+                'temperature': [850 + (i % 10) * 0.5 for i in range(request.nRuns)],
+                'pressure': [2.5 + (i % 5) * 0.1 for i in range(request.nRuns)],
+                'yield': [95 + (i % 3) for i in range(request.nRuns)]
+            }
+        else:
+            data = {
+                'run_id': [f"RUN-{i:04d}" for i in range(request.nRuns)],
+                'temperature': [850 + (i % 10) * 0.5 for i in range(request.nRuns)],
+                'pressure': [2.5 + (i % 5) * 0.1 for i in range(request.nRuns)],
+                'yield': [95 + (i % 3) for i in range(request.nRuns)]
+            }
+        df = pd.DataFrame(data)
     
     # Save output
     if request.saveAsSeedFolder:
@@ -125,10 +135,44 @@ async def get_templates(
     db: Session = Depends(get_db)
 ):
     """Get available templates for a process type"""
-    # TODO: Implement actual template lookup
-    # For now, return placeholder
-    templates = ["default", "high_yield", "low_variance"]
+    if processType.lower() == "etch":
+        templates = ["default", "with_drift", "with_step_change", "with_intermittent", "high_yield"]
+    else:
+        templates = ["default", "high_yield", "low_variance"]
     return TemplateResponse(
         process_type=processType,
         templates=templates
     )
+
+@router.get("/presets")
+async def get_presets():
+    """Get process type presets (Etch, Depo, Litho)"""
+    return {
+        "etch": {
+            "name": "Etch Process",
+            "columns": EtchDataGenerator().generate_etch_schema()["columns"],
+            "description": "Dry etch process with CF4/O2 chemistry"
+        },
+        "depo": {
+            "name": "Deposition Process",
+            "description": "CVD/PVD deposition process"
+        },
+        "litho": {
+            "name": "Lithography Process",
+            "description": "Photolithography process"
+        }
+    }
+
+@router.post("/schema")
+async def generate_schema(
+    process_type: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Generate schema template for a process type"""
+    if process_type.lower() == "etch":
+        generator = EtchDataGenerator()
+        schema = generator.generate_etch_schema()
+        return schema
+    else:
+        raise HTTPException(status_code=400, detail=f"Process type {process_type} not supported")

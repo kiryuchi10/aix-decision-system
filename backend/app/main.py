@@ -16,7 +16,7 @@ from datetime import datetime
 import json
 
 # Import core routers (always available)
-from .routers import papers, datasets, seeds, generator, chat, auth
+from .routers import papers, datasets, seeds, generator, chat, auth, spc, viz
 
 # Import optional routers (may not exist or have missing dependencies)
 fdc = doe = ml_pipeline = coupling = recommendations = data_management = None
@@ -91,6 +91,8 @@ app.include_router(datasets.router, prefix="/api/v1")
 app.include_router(seeds.router, prefix="/api/v1")
 app.include_router(generator.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
+app.include_router(spc.router, prefix="/api/v1")
+app.include_router(viz.router, prefix="/api/v1")
 
 # Include optional routers if they exist
 if fdc:

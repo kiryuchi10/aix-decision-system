@@ -10,6 +10,9 @@ const Generator: React.FC = () => {
   const [nRuns, setNRuns] = useState(100);
   const [timeSeries, setTimeSeries] = useState(false);
   const [saveAsSeedFolder, setSaveAsSeedFolder] = useState(false);
+  const [includeDrift, setIncludeDrift] = useState(false);
+  const [includeStepChange, setIncludeStepChange] = useState(false);
+  const [includeIntermittent, setIncludeIntermittent] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<any>(null);
 
@@ -24,7 +27,10 @@ const Generator: React.FC = () => {
         template: template || null,
         nRuns,
         timeSeries,
-        saveAsSeedFolder
+        saveAsSeedFolder,
+        include_drift: includeDrift,
+        include_step_change: includeStepChange,
+        include_intermittent: includeIntermittent
       });
       setResult(response.data);
     } catch (error: any) {
@@ -113,6 +119,51 @@ const Generator: React.FC = () => {
               <label htmlFor="saveAsSeedFolder" className="text-sm text-slate-300">
                 Save as seed folder
               </label>
+            </div>
+
+            <div className="border-t border-slate-700 pt-4">
+              <div className="text-sm font-semibold text-slate-300 mb-3">Anomaly Scenarios (Etch only)</div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="includeDrift"
+                    checked={includeDrift}
+                    onChange={(e) => setIncludeDrift(e.target.checked)}
+                    className="w-4 h-4"
+                    disabled={processType !== 'etch'}
+                  />
+                  <label htmlFor="includeDrift" className="text-sm text-slate-300">
+                    Include Gradual Drift
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="includeStepChange"
+                    checked={includeStepChange}
+                    onChange={(e) => setIncludeStepChange(e.target.checked)}
+                    className="w-4 h-4"
+                    disabled={processType !== 'etch'}
+                  />
+                  <label htmlFor="includeStepChange" className="text-sm text-slate-300">
+                    Include Step Change
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="includeIntermittent"
+                    checked={includeIntermittent}
+                    onChange={(e) => setIncludeIntermittent(e.target.checked)}
+                    className="w-4 h-4"
+                    disabled={processType !== 'etch'}
+                  />
+                  <label htmlFor="includeIntermittent" className="text-sm text-slate-300">
+                    Include Intermittent Spikes
+                  </label>
+                </div>
+              </div>
             </div>
 
             <button

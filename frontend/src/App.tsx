@@ -15,6 +15,11 @@ import Generator from './pages/Generator';
 import Chat from './pages/Chat';
 import MLModelComparison from './pages/MLModelComparison';
 import DoEPlanner from './pages/DoEPlanner';
+import SPCPage from './pages/SPC';
+import FDCPage from './pages/FDC';
+import CouplingPage from './pages/Coupling';
+import SettingsPage from './pages/Settings';
+import ProfilePage from './pages/Profile';
 
 const App: React.FC = () => {
   return (
@@ -49,12 +54,18 @@ const AppLayout: React.FC = () => {
         <main className="flex-1 overflow-auto">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/spc" element={<SPCPage />} />
+            <Route path="/fdc" element={<FDCPage />} />
+            <Route path="/coupling" element={<CouplingPage />} />
             <Route path="/papers" element={<Papers />} />
             <Route path="/datasets" element={<Datasets />} />
             <Route path="/generator" element={<Generator />} />
+            <Route path="/data-generator" element={<Generator />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/doe" element={<DoEPlanner />} />
             <Route path="/ml-comparison" element={<MLModelComparison />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

@@ -10,7 +10,10 @@ import {
   FileText,
   Database,
   Sparkles,
-  MessageSquare
+  MessageSquare,
+  AlertTriangle,
+  Image,
+  Link as LinkIcon
 } from 'lucide-react'
 
 const Sidebar: React.FC = () => {
@@ -18,14 +21,16 @@ const Sidebar: React.FC = () => {
   
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'SPC Center', href: '/spc', icon: BarChart3 },
+    { name: 'FDC Sentinel', href: '/fdc', icon: AlertTriangle },
+    { name: 'Coupling Control', href: '/coupling', icon: LinkIcon },
+    { name: 'Viz Automation', href: '/viz-automation', icon: Image },
+    { name: 'Data Generator', href: '/data-generator', icon: Sparkles },
+    { name: 'DoE Planner', href: '/doe', icon: BarChart3 },
+    { name: 'ML Pipeline', href: '/ml-comparison', icon: Brain },
     { name: 'Papers', href: '/papers', icon: FileText },
     { name: 'Datasets', href: '/datasets', icon: Database },
-    { name: 'Generator', href: '/generator', icon: Sparkles },
     { name: 'Chat', href: '/chat', icon: MessageSquare },
-    { name: 'ML Model Comparison', href: '/ml-comparison', icon: Brain },
-    { name: 'FDC Monitoring', href: '/fdc', icon: Activity },
-    { name: 'DoE Planning', href: '/doe', icon: BarChart3 },
-    { name: 'Coupling Control', href: '/coupling', icon: Zap },
     { name: 'Settings', href: '/settings', icon: Settings },
   ]
   
