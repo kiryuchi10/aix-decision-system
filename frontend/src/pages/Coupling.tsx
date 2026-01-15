@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link as LinkIcon, Power, Sliders, Shield, CheckCircle, XCircle, FileText } from 'lucide-react';
 import axios from 'axios';
+import { useProcessWindow } from '../features/settings/useProcessWindow';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+function clamp(v: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, v));
+}
 
 interface CouplingStatus {
   is_active: boolean;
@@ -21,10 +26,17 @@ interface CouplingAction {
   status: string;
 }
 
+const MOCK_VARS = [
+  { key: 'pressure_torr', label: 'Chamber Pressure', unit: 'Torr', min: 10, max: 80, step: 0.1, current: 35.5, recommended: 34.8 },
+  { key: 'bias_power_w', label: 'Bias Power', unit: 'W', min: 0, max: 600, step: 1, current: 210, recommended: 205 },
+  { key: 'temperature', label: 'Temperature', unit: '°C', min: 840, max: 860, step: 0.1, current: 852.3, recommended: 850 },
+];
+
 const CouplingPage: React.FC = () => {
   const [status, setStatus] = useState<CouplingStatus | null>(null);
   const [pendingActions, setPendingActions] = useState<CouplingAction[]>([]);
   const [loading, setLoading] = useState(false);
+  const { guardrails, loading: guardrailsLoading, error: guardrailsError } = useProcessWindow();
 
   useEffect(() => {
     loadStatus();
@@ -133,56 +145,57 @@ const CouplingPage: React.FC = () => {
             <Sliders className="w-5 h-5" />
             Adjustable Variables
           </h2>
+          {guardrailsLoading && <div className="text-slate-400 text-sm mb-4">Loading guardrails...</div>}
+          {guardrailsError && (
+            <div className="text-yellow-400 text-sm mb-4">
+              Guardrail API error. Using local ranges only.
+            </div>
+          )}
           <div className="space-y-4">
-            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <div className="font-semibold text-white">Temperature</div>
-                  <div className="text-sm text-slate-400">Current: 852.3°C</div>
+            {MOCK_VARS.map((v) => {
+              const gr = guardrails.get(v.key);
+              const hardMin = gr?.hardMin ?? v.min;
+              const hardMax = gr?.hardMax ?? v.max;
+              const clampedCurrent = clamp(v.current, hardMin, hardMax);
+              const clampedRecommended = v.recommended != null ? clamp(v.recommended, hardMin, hardMax) : undefined;
+
+              return (
+                <div key={v.key} className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <div className="font-semibold text-white">{v.label}</div>
+                      <div className="text-sm text-slate-400">Current: {clampedCurrent}{v.unit}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-yellow-400" />
+                      <span className="text-xs text-yellow-400">
+                        Guardrail: {hardMin}-{hardMax} {v.unit}
+                      </span>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min={hardMin}
+                    max={hardMax}
+                    step={v.step}
+                    defaultValue={clampedCurrent}
+                    className="w-full mt-2"
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      console.log(`Adjust ${v.key} to ${val} (clamped: ${clamp(val, hardMin, hardMax)})`);
+                      // TODO: POST /coupling/actions/execute
+                    }}
+                  />
+                  <div className="flex justify-between text-xs text-slate-400 mt-1">
+                    <span>{hardMin}</span>
+                    {clampedRecommended != null && (
+                      <span className="text-cyan-400">Recommended: {clampedRecommended}{v.unit}</span>
+                    )}
+                    <span>{hardMax}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-yellow-400" />
-                  <span className="text-xs text-yellow-400">Guardrail: 840-860°C</span>
-                </div>
-              </div>
-              <input
-                type="range"
-                min="840"
-                max="860"
-                defaultValue="852"
-                className="w-full mt-2"
-              />
-              <div className="flex justify-between text-xs text-slate-400 mt-1">
-                <span>840</span>
-                <span>Recommended: 850°C</span>
-                <span>860</span>
-              </div>
-            </div>
-            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <div className="font-semibold text-white">Pressure</div>
-                  <div className="text-sm text-slate-400">Current: 2.48 Torr</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-yellow-400" />
-                  <span className="text-xs text-yellow-400">Guardrail: 2.3-2.7 Torr</span>
-                </div>
-              </div>
-              <input
-                type="range"
-                min="2.3"
-                max="2.7"
-                step="0.01"
-                defaultValue="2.48"
-                className="w-full mt-2"
-              />
-              <div className="flex justify-between text-xs text-slate-400 mt-1">
-                <span>2.3</span>
-                <span>Recommended: 2.5 Torr</span>
-                <span>2.7</span>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
 

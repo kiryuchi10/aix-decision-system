@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Problem Statement</h2>
+<div class="summary-box">
+  <ul style="list-style: none; margin-left: 0;">
+    <li style="margin-bottom: 12px;">
+      <b style="color: #1e40af;">What:</b> {{ rca.what }}
+    </li>
+    <li style="margin-bottom: 12px;">
+      <b style="color: #1e40af;">Where:</b> {{ rca.where }}
+    </li>
+    <li style="margin-bottom: 12px;">
+      <b style="color: #1e40af;">When:</b> {{ rca.when }}
+    </li>
+    <li style="margin-bottom: 12px;">
+      <b style="color: #1e40af;">Impact:</b> {{ rca.impact }}
+    </li>
+    {% if rca.frequency %}
+    <li style="margin-bottom: 12px;">
+      <b style="color: #1e40af;">Frequency:</b> {{ rca.frequency }}
+    </li>
+    {% endif %}
+  </ul>
+</div>
+
+<hr>
+
+<h2>Evidence & Data</h2>
+{% if rca.evidence %}
+{% for e in rca.evidence %}
+  <div class="chart-container">
+    <h3>{{ e.title }}</h3>
+    {% if e.image %}
+    <img src="{{ e.image }}" alt="{{ e.title }}" style="width: 100%;">
+    {% endif %}
+    <div style="margin-top: 12px;">
+      <p><b>Summary:</b> {{ e.summary }}</p>
+      {% if e.key_findings %}
+      <ul style="margin-top: 8px;">
+        {% for finding in e.key_findings %}
+        <li>{{ finding }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
+{% else %}
+<div class="summary-box">
+  <p>No evidence data available.</p>
+</div>
+{% endif %}
+
+<hr>
+
+<h2>Hypotheses & Analysis</h2>
+{% if rca.hypotheses %}
+<table>
+  <tr>
+    <th>Hypothesis</th>
+    <th>Evidence</th>
+    <th>Confidence</th>
+    <th>Status</th>
+  </tr>
+  {% for h in rca.hypotheses %}
+  <tr>
+    <td><b>{{ h.description }}</b></td>
+    <td>{{ h.evidence }}</td>
+    <td>
+      <b>{{ h.confidence }}%</b>
+      {% if h.confidence >= 80 %}
+      <span class="badge success">High</span>
+      {% elif h.confidence >= 50 %}
+      <span class="badge warning">Medium</span>
+      {% else %}
+      <span class="badge">Low</span>
+      {% endif %}
+    </td>
+    <td>
+      {% if h.status == 'CONFIRMED' %}
+      <span class="badge success">CONFIRMED</span>
+      {% elif h.status == 'REJECTED' %}
+      <span class="badge danger">REJECTED</span>
+      {% else %}
+      <span class="badge warning">PENDING</span>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="summary-box">
+  <p>No hypotheses identified.</p>
+</div>
+{% endif %}
+
+<hr>
+
+<h2>Root Cause</h2>
+<div class="summary-box">
+  <p><b>Identified Root Cause:</b></p>
+  <p style="margin-top: 8px; font-size: 16px;">{{ rca.root_cause }}</p>
+  {% if rca.root_cause_confidence %}
+  <p style="margin-top: 8px; color: #64748b;">
+    <b>Confidence Level:</b> {{ rca.root_cause_confidence }}%
+  </p>
+  {% endif %}
+</div>
+
+<hr>
+
+<h2>Corrective & Preventive Actions (CAPA)</h2>
+{% if rca.capa %}
+<div class="grid">
+  {% for action in rca.capa %}
+  <div class="card">
+    <h3 style="font-size: 16px; margin-bottom: 8px;">
+      {{ action.type }}
+      {% if action.priority == 'HIGH' %}
+      <span class="badge danger">HIGH</span>
+      {% elif action.priority == 'MEDIUM' %}
+      <span class="badge warning">MEDIUM</span>
+      {% else %}
+      <span class="badge">LOW</span>
+      {% endif %}
+    </h3>
+    <p><b>Action:</b> {{ action.description }}</p>
+    {% if action.owner %}
+    <p style="margin-top: 8px; font-size: 12px; color: #64748b;">
+      <b>Owner:</b> {{ action.owner }}
+    </p>
+    {% endif %}
+    {% if action.due_date %}
+    <p style="margin-top: 4px; font-size: 12px; color: #64748b;">
+      <b>Due:</b> {{ action.due_date }}
+    </p>
+    {% endif %}
+    {% if action.status %}
+    <p style="margin-top: 4px;">
+      <b>Status:</b> 
+      {% if action.status == 'COMPLETED' %}
+      <span class="badge success">COMPLETED</span>
+      {% elif action.status == 'IN_PROGRESS' %}
+      <span class="badge warning">IN PROGRESS</span>
+      {% else %}
+      <span class="badge">PENDING</span>
+      {% endif %}
+    </p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="summary-box">
+  <p>No CAPA actions defined yet.</p>
+</div>
+{% endif %}
+
+<hr>
+
+<h2>Verification & Follow-up</h2>
+{% if rca.verification %}
+<div class="summary-box">
+  <p><b>Verification Plan:</b> {{ rca.verification.plan }}</p>
+  {% if rca.verification.metrics %}
+  <p style="margin-top: 8px;"><b>Success Metrics:</b></p>
+  <ul style="margin-top: 4px;">
+    {% for metric in rca.verification.metrics %}
+    <li>{{ metric }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if rca.verification.follow_up_date %}
+  <p style="margin-top: 8px; color: #64748b;">
+    <b>Follow-up Date:</b> {{ rca.verification.follow_up_date }}
+  </p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

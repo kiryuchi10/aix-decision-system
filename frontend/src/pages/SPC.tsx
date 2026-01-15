@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart3, AlertCircle, TrendingUp } from 'lucide-react';
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { useSpcChart } from '../features/spc/useSpcChart';
+import { getSpcViolations } from '../features/spc/spc.api';
 
 interface ChartData {
   chart_type: string;
@@ -22,44 +22,43 @@ const SPCPage: React.FC = () => {
   const [selectedEntityId, setSelectedEntityId] = useState('CHAMBER-1');
   const [selectedMetric, setSelectedMetric] = useState('temperature');
   const [chartType, setChartType] = useState('xbar_r');
-  const [chartData, setChartData] = useState<ChartData | null>(null);
   const [violations, setViolations] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+
+  const chartRequest = useMemo(() => ({
+    entity_type: selectedEntity,
+    entity_id: selectedEntityId,
+    metric_name: selectedMetric,
+    chart_type: chartType,
+    subgroup_size: 5,
+    data_range_hours: 24,
+  }), [selectedEntity, selectedEntityId, selectedMetric, chartType]);
+
+  const { data: chartData, loading, error } = useSpcChart(chartRequest);
 
   useEffect(() => {
-    loadChart();
     loadViolations();
-  }, [selectedEntity, selectedEntityId, selectedMetric, chartType]);
-
-  const loadChart = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.post(`${API_BASE_URL}/api/v1/spc/chart`, {
-        entity_type: selectedEntity,
-        entity_id: selectedEntityId,
-        metric_name: selectedMetric,
-        chart_type: chartType,
-        subgroup_size: 5,
-        data_range_hours: 24
-      });
-      setChartData(response.data);
-    } catch (error) {
-      console.error('Failed to load chart:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [selectedEntity, selectedEntityId]);
 
   const loadViolations = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/v1/spc/violations`, {
-        params: { range_hours: 24, entity_type: selectedEntity, entity_id: selectedEntityId }
-      });
-      setViolations(response.data);
+      const data = await getSpcViolations(24, selectedEntity, selectedEntityId);
+      setViolations(data);
     } catch (error) {
       console.error('Failed to load violations:', error);
     }
   };
+
+  const chartDataForRecharts = useMemo(() => {
+    if (!chartData) return [];
+    return chartData.data_points.map((pt) => ({
+      index: pt.index,
+      value: pt.value,
+      timestamp: new Date(pt.timestamp).toLocaleTimeString(),
+      ucl: chartData.ucl,
+      lcl: chartData.lcl,
+      cl: chartData.cl,
+    }));
+  }, [chartData]);
 
   return (
     <div className="p-6 space-y-6">
@@ -156,10 +155,60 @@ const SPCPage: React.FC = () => {
                 </div>
               </div>
               <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
-                <div className="text-sm text-slate-400 mb-2">Chart Placeholder</div>
-                <div className="h-64 bg-slate-800 rounded flex items-center justify-center text-slate-500">
-                  Chart visualization (Plotly/Recharts integration needed)
-                </div>
+                <div className="text-sm text-slate-400 mb-2">Control Chart - {chartType.toUpperCase()}</div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={chartDataForRecharts}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis 
+                      dataKey="timestamp" 
+                      stroke="#94a3b8"
+                      tick={{ fill: '#94a3b8', fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis 
+                      stroke="#94a3b8"
+                      tick={{ fill: '#94a3b8', fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1e293b', 
+                        border: '1px solid #334155',
+                        borderRadius: '8px',
+                        color: '#e2e8f0'
+                      }}
+                      labelStyle={{ color: '#94a3b8' }}
+                    />
+                    <Legend />
+                    <ReferenceLine 
+                      y={chartData.ucl} 
+                      stroke="#ef4444" 
+                      strokeDasharray="5 5" 
+                      label={{ value: "UCL", position: "right", fill: "#ef4444" }}
+                    />
+                    <ReferenceLine 
+                      y={chartData.cl} 
+                      stroke="#3b82f6" 
+                      strokeDasharray="5 5" 
+                      label={{ value: "CL", position: "right", fill: "#3b82f6" }}
+                    />
+                    <ReferenceLine 
+                      y={chartData.lcl} 
+                      stroke="#ef4444" 
+                      strokeDasharray="5 5" 
+                      label={{ value: "LCL", position: "right", fill: "#ef4444" }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#06b6d4" 
+                      strokeWidth={2}
+                      dot={{ r: 3, fill: '#06b6d4' }}
+                      name="Value"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
           ) : (

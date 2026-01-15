@@ -226,6 +226,93 @@ async def generate_report(
         "download_url": f"/api/v1/viz/reports/{report_id}/download"
     }
 
+@router.post("/reports/spc/generate")
+async def generate_spc_report(
+    request: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate SPC Summary Report"""
+    from app.services.report_renderer import render_spc_report
+    
+    spc_data = request.get("spc_data", {})
+    report_meta = request.get("report_meta", {
+        "title": "SPC Summary Report",
+        "process": "Etch",
+        "module": "SPC Center",
+        "time_window": "Last 24 hours",
+        "author": current_user.email,
+        "version": "1.0"
+    })
+    data_meta = request.get("data_meta", {})
+    
+    filepath = render_spc_report(spc_data, report_meta, data_meta)
+    
+    return {
+        "message": "SPC report generated successfully",
+        "filepath": filepath,
+        "filename": os.path.basename(filepath)
+    }
+
+
+@router.post("/reports/fdc/generate")
+async def generate_fdc_report(
+    request: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate FDC Alarm Review Report"""
+    from app.services.report_renderer import render_fdc_report
+    
+    fdc_data = request.get("fdc_data", {})
+    report_meta = request.get("report_meta", {
+        "title": "FDC Alarm Review Report",
+        "process": "Etch",
+        "module": "FDC Sentinel",
+        "time_window": "Last 24 hours",
+        "author": current_user.email,
+        "version": "1.0"
+    })
+    data_meta = request.get("data_meta", {})
+    
+    filepath = render_fdc_report(fdc_data, report_meta, data_meta)
+    
+    return {
+        "message": "FDC report generated successfully",
+        "filepath": filepath,
+        "filename": os.path.basename(filepath)
+    }
+
+
+@router.post("/reports/rca/generate")
+async def generate_rca_report(
+    request: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate RCA (Root Cause Analysis) Report"""
+    from app.services.report_renderer import render_rca_report
+    
+    rca_data = request.get("rca_data", {})
+    report_meta = request.get("report_meta", {
+        "title": "Root Cause Analysis Report",
+        "process": "Etch",
+        "module": "Quality Analysis",
+        "time_window": "Incident Analysis",
+        "author": current_user.email,
+        "version": "1.0"
+    })
+    data_meta = request.get("data_meta", {})
+    
+    filepath = render_rca_report(rca_data, report_meta, data_meta)
+    
+    return {
+        "message": "RCA report generated successfully",
+        "filepath": filepath,
+        "filename": os.path.basename(filepath)
+    }
+
+
 @router.get("/reports/{report_id}/download")
 async def download_report(
     report_id: str,

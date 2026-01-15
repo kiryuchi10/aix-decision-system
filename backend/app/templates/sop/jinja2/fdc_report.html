@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Alarm Summary</h2>
+<div class="grid">
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Total Alarms</div>
+    <b>{{ fdc.total }}</b>
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Active Alarms</div>
+    <b>{{ fdc.active }}</b>
+    {% if fdc.active > 5 %}
+    <span class="badge danger">Critical</span>
+    {% elif fdc.active > 0 %}
+    <span class="badge warning">Warning</span>
+    {% else %}
+    <span class="badge success">Clear</span>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Unique Alarms</div>
+    <b>{{ fdc.unique }}</b>
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Repeat Rate</div>
+    <b>{{ "%.1f"|format(fdc.repeat_rate) }}%</b>
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Avg Yield Impact</div>
+    <b>{{ "%.2f"|format(fdc.avg_yield_impact) }}%</b>
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Drift Rate</div>
+    <b>{{ "%.4f"|format(fdc.drift_rate) }}</b>
+  </div>
+</div>
+
+<hr>
+
+<h2>Alarm Pareto</h2>
+{% if fdc.pareto_image %}
+<div class="chart-container">
+  <img src="{{ fdc.pareto_image }}" alt="Alarm Pareto Chart" style="width: 100%;">
+</div>
+{% endif %}
+
+<hr>
+
+<h2>Alarm Type Distribution</h2>
+{% if fdc.type_distribution %}
+<div class="grid">
+  {% for type, count in fdc.type_distribution.items() %}
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">{{ type.replace('_', ' ').title() }}</div>
+    <b>{{ count }}</b>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<hr>
+
+<h2>Top Alarms</h2>
+{% if fdc.top_alarms %}
+<table>
+  <tr>
+    <th>Time</th>
+    <th>Chamber</th>
+    <th>Alarm ID</th>
+    <th>Type</th>
+    <th>Parameter</th>
+    <th>Current Value</th>
+    <th>Threshold</th>
+    <th>Sigma Distance</th>
+    <th>Yield Impact</th>
+    <th>Status</th>
+  </tr>
+  {% for a in fdc.top_alarms %}
+  <tr>
+    <td>{{ a.time }}</td>
+    <td>{{ a.chamber }}</td>
+    <td><b>{{ a.code }}</b></td>
+    <td>
+      {% if a.type == 'GRADUAL_DRIFT' %}
+      <span class="badge warning">Gradual Drift</span>
+      {% elif a.type == 'STEP_CHANGE' %}
+      <span class="badge danger">Step Change</span>
+      {% elif a.type == 'INTERMITTENT' %}
+      <span class="badge">Intermittent</span>
+      {% else %}
+      {{ a.type }}
+      {% endif %}
+    </td>
+    <td>{{ a.metric }}</td>
+    <td><b>{{ "%.3f"|format(a.value) }}</b></td>
+    <td>{{ "%.3f"|format(a.threshold) }}</td>
+    <td><b>{{ "%.2f"|format(a.sigma_distance) }}σ</b></td>
+    <td>
+      {% if a.yield_impact < 0 %}
+      <span style="color: #ef4444;">{{ "%.2f"|format(a.yield_impact) }}%</span>
+      {% else %}
+      {{ "%.2f"|format(a.yield_impact) }}%
+      {% endif %}
+    </td>
+    <td>
+      {% if a.status == 'ACTIVE' %}
+      <span class="badge danger">ACTIVE</span>
+      {% elif a.status == 'ACKNOWLEDGED' %}
+      <span class="badge warning">ACK</span>
+      {% else %}
+      <span class="badge success">RESOLVED</span>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="summary-box">
+  <p>No alarms in the selected time period.</p>
+</div>
+{% endif %}
+
+<hr>
+
+<h2>Chamber/Recipe Heatmap</h2>
+{% if fdc.heatmap_image %}
+<div class="chart-container">
+  <img src="{{ fdc.heatmap_image }}" alt="Alarm Heatmap" style="width: 100%;">
+</div>
+{% endif %}
+
+<hr>
+
+<h2>Drift Detection Summary</h2>
+{% if fdc.drift_summary %}
+<div class="summary-box">
+  <h3>Detected Drifts</h3>
+  <ul>
+    {% for drift in fdc.drift_summary %}
+    <li>
+      <b>{{ drift.parameter }}:</b> 
+      {{ drift.type }} detected at {{ drift.detected_at }}. 
+      Current value: {{ "%.3f"|format(drift.current_value) }}, 
+      Expected: {{ "%.3f"|format(drift.expected_value) }}.
+      <b>Impact:</b> {{ "%.2f"|format(drift.yield_impact) }}%
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<hr>
+
+<h2>Rule Adjustment Suggestions</h2>
+{% if fdc.recommendations %}
+<ul>
+  {% for r in fdc.recommendations %}
+    <li>
+      <b>{{ r.parameter }}:</b> {{ r.description }}
+      {% if r.current_threshold and r.suggested_threshold %}
+      (Current: {{ "%.3f"|format(r.current_threshold) }}, 
+      Suggested: {{ "%.3f"|format(r.suggested_threshold) }})
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="summary-box">
+  <p>No rule adjustments recommended at this time.</p>
+</div>
+{% endif %}
+
+{% endblock %}

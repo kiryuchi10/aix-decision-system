@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Sparkles, Download } from 'lucide-react';
 import axios from 'axios';
+import Plot from 'react-plotly.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -15,6 +16,26 @@ const Generator: React.FC = () => {
   const [includeIntermittent, setIncludeIntermittent] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [previewData, setPreviewData] = useState<any>(null);
+
+  // Mock preview data (replace with actual data from API)
+  const plotlyData = useMemo(() => {
+    if (!previewData) {
+      // Generate sample data for preview
+      const t = Array.from({ length: 200 }, (_, i) => i);
+      const pressure = t.map(i => 35 + Math.sin(i / 15) * 0.6 + (i > 120 ? 0.8 : 0));
+      const bias = t.map(i => 210 + Math.cos(i / 20) * 2.5);
+      const endpoint = t.map(i => 0.85 - i * 0.0005 + (i % 50 === 0 ? -0.03 : 0));
+      
+      return {
+        t,
+        pressure,
+        bias,
+        endpoint,
+      };
+    }
+    return previewData;
+  }, [previewData]);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +43,7 @@ const Generator: React.FC = () => {
     setResult(null);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/v1/generate`, {
+      const response = await axios.post(`${API_BASE_URL}/api/v1/generator/dataset`, {
         processType,
         template: template || null,
         nRuns,
@@ -33,6 +54,9 @@ const Generator: React.FC = () => {
         include_intermittent: includeIntermittent
       });
       setResult(response.data);
+      // TODO: Load preview data from generated file
+      // For now, set mock preview
+      setPreviewData(null); // Trigger useMemo to generate sample
     } catch (error: any) {
       console.error('Generation failed:', error);
       alert(error.response?.data?.detail || 'Generation failed');
@@ -177,7 +201,7 @@ const Generator: React.FC = () => {
           </form>
         </div>
 
-        {/* Result */}
+        {/* Result & Preview */}
         <div className="card">
           <h2 className="text-xl font-bold text-white mb-4">Generation Result</h2>
           {result ? (
@@ -197,6 +221,64 @@ const Generator: React.FC = () => {
                 <Download className="w-4 h-4" />
                 Download
               </a>
+              
+              {/* Plotly Multi-subplot Preview */}
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold text-white mb-3">Preview (Multi-subplots)</h3>
+                <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+                  <Plot
+                    data={[
+                      {
+                        x: plotlyData.t,
+                        y: plotlyData.pressure,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'Pressure (Torr)',
+                        xaxis: 'x',
+                        yaxis: 'y',
+                        line: { color: '#06b6d4' },
+                      },
+                      {
+                        x: plotlyData.t,
+                        y: plotlyData.bias,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'Bias Power (W)',
+                        xaxis: 'x2',
+                        yaxis: 'y2',
+                        line: { color: '#10b981' },
+                      },
+                      {
+                        x: plotlyData.t,
+                        y: plotlyData.endpoint,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'Endpoint Signal',
+                        xaxis: 'x3',
+                        yaxis: 'y3',
+                        line: { color: '#f59e0b' },
+                      },
+                    ]}
+                    layout={{
+                      height: 520,
+                      margin: { l: 45, r: 20, t: 20, b: 40 },
+                      grid: { rows: 3, columns: 1, pattern: 'independent' },
+                      xaxis: { title: 'Time Index', showgrid: true, color: '#94a3b8' },
+                      yaxis: { title: 'Pressure (Torr)', showgrid: true, color: '#94a3b8' },
+                      xaxis2: { title: 'Time Index', showgrid: true, color: '#94a3b8' },
+                      yaxis2: { title: 'Bias Power (W)', showgrid: true, color: '#94a3b8' },
+                      xaxis3: { title: 'Time Index', showgrid: true, color: '#94a3b8' },
+                      yaxis3: { title: 'Endpoint Signal', showgrid: true, color: '#94a3b8' },
+                      paper_bgcolor: 'rgba(0,0,0,0)',
+                      plot_bgcolor: 'rgba(0,0,0,0)',
+                      font: { color: 'rgba(230,238,252,0.9)' },
+                      legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(15,23,42,0.8)' },
+                    }}
+                    config={{ displayModeBar: false, responsive: true }}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+              </div>
             </div>
           ) : (
             <div className="text-center text-slate-500 py-12">

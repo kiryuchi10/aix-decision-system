@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AlertTriangle, Activity, TrendingDown, CheckCircle, XCircle } from 'lucide-react';
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
+import { useFdc } from '../features/fdc/useFdcAlarms';
+import { acknowledgeAlarm, resolveAlarm } from '../features/fdc/fdc.api';
 
 interface Alarm {
   id: string;
@@ -19,42 +19,12 @@ interface Alarm {
 
 const FDCPage: React.FC = () => {
   const [timeRange, setTimeRange] = useState('24h');
-  const [alarms, setAlarms] = useState<Alarm[]>([]);
-  const [processCapability, setProcessCapability] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    loadAlarms();
-    loadProcessCapability();
-    const interval = setInterval(() => {
-      loadAlarms();
-      loadProcessCapability();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [timeRange]);
-
-  const loadAlarms = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/v1/fdc/alarms/active`);
-      setAlarms(response.data);
-    } catch (error) {
-      console.error('Failed to load alarms:', error);
-    }
-  };
-
-  const loadProcessCapability = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/v1/fdc/process-capability`);
-      setProcessCapability(response.data);
-    } catch (error) {
-      console.error('Failed to load process capability:', error);
-    }
-  };
+  const { alarms, cap: processCapability, loading } = useFdc();
 
   const handleAck = async (alarmId: string) => {
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/fdc/alarms/${alarmId}/ack`);
-      loadAlarms();
+      await acknowledgeAlarm(alarmId);
+      // Hook will auto-refresh
     } catch (error) {
       console.error('Failed to acknowledge alarm:', error);
     }
@@ -62,12 +32,28 @@ const FDCPage: React.FC = () => {
 
   const handleResolve = async (alarmId: string) => {
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/fdc/alarms/${alarmId}/resolve`);
-      loadAlarms();
+      await resolveAlarm(alarmId);
+      // Hook will auto-refresh
     } catch (error) {
       console.error('Failed to resolve alarm:', error);
     }
   };
+
+  // Mock drift chart data (replace with real API later)
+  const driftChartData = useMemo(() => {
+    const points = Array.from({ length: 50 }, (_, i) => {
+      const base = 850;
+      const drift = i * 0.1; // gradual drift
+      const noise = (Math.random() - 0.5) * 2;
+      return {
+        index: i,
+        value: base + drift + noise,
+        threshold: 850,
+        timestamp: new Date(Date.now() - (50 - i) * 3600000).toLocaleTimeString(),
+      };
+    });
+    return points;
+  }, [timeRange]);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -215,13 +201,61 @@ const FDCPage: React.FC = () => {
           )}
         </div>
 
-        {/* Drift Chart Placeholder */}
+        {/* Drift Chart */}
         <div className="card">
           <h2 className="text-xl font-bold text-white mb-4">Drift Detection</h2>
           <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
-            <div className="h-64 bg-slate-800 rounded flex items-center justify-center text-slate-500">
-              Drift chart visualization (Plotly/Recharts integration needed)
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={driftChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis 
+                  dataKey="timestamp" 
+                  stroke="#94a3b8"
+                  tick={{ fill: '#94a3b8', fontSize: 10 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                />
+                <YAxis 
+                  stroke="#94a3b8"
+                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1e293b', 
+                    border: '1px solid #334155',
+                    borderRadius: '8px',
+                    color: '#e2e8f0'
+                  }}
+                />
+                <Legend />
+                <ReferenceArea 
+                  y1={845} 
+                  y2={855} 
+                  stroke="#10b981" 
+                  strokeOpacity={0.2}
+                  fill="#10b981"
+                  fillOpacity={0.1}
+                  label={{ value: "Normal Range", position: "top", fill: "#10b981" }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke="#f59e0b" 
+                  strokeWidth={2}
+                  dot={{ r: 2 }}
+                  name="Temperature"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="threshold" 
+                  stroke="#ef4444" 
+                  strokeDasharray="5 5"
+                  strokeWidth={1.5}
+                  name="Threshold"
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useReducer, useState } from 'react';
 import { Beaker, Play, Save, BarChart3, TrendingUp } from 'lucide-react';
+import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const DOE_API_BASE = `${API_BASE_URL}/api/v1/doe`;
@@ -247,12 +248,22 @@ export default function DoEPlanner() {
 
   async function savePlan() {
     try {
+      if (!designMatrix.length) throw new Error('Generate design matrix first.');
       dispatch({ type: 'LOADING', value: true });
       dispatch({ type: 'ERROR', value: '' });
-      // TODO: Implement actual save
-      dispatch({ type: 'TOAST', value: 'Plan saved.' });
+      
+      const response = await axios.post(`${DOE_API_BASE}/plans`, {
+        project_id: selectedProjectId || undefined,
+        method,
+        factor_spec: factorSpecs,
+        design_matrix: designMatrix,
+        name: `Plan ${new Date().toLocaleString()}`
+      });
+      
+      dispatch({ type: 'SET', payload: { selectedPlanId: response.data.plan_id } });
+      dispatch({ type: 'TOAST', value: `Plan saved: ${response.data.plan_id}` });
     } catch (e: any) {
-      dispatch({ type: 'ERROR', value: e.message || String(e) });
+      dispatch({ type: 'ERROR', value: e.response?.data?.detail || e.message || String(e) });
     } finally {
       dispatch({ type: 'LOADING', value: false });
     }
@@ -261,13 +272,19 @@ export default function DoEPlanner() {
   async function submitResults() {
     try {
       if (!selectedPlanId) throw new Error('Select a plan first.');
+      if (!runResults.length) throw new Error('No results to submit.');
       dispatch({ type: 'LOADING', value: true });
       dispatch({ type: 'ERROR', value: '' });
-      // TODO: Implement actual submit
+      
+      await axios.post(`${DOE_API_BASE}/plans/${selectedPlanId}/results`, {
+        plan_id: selectedPlanId,
+        results: runResults
+      });
+      
       dispatch({ type: 'TOAST', value: 'Results submitted.' });
       dispatch({ type: 'SET', payload: { tab: 'Analysis' } });
     } catch (e: any) {
-      dispatch({ type: 'ERROR', value: e.message || String(e) });
+      dispatch({ type: 'ERROR', value: e.response?.data?.detail || e.message || String(e) });
     } finally {
       dispatch({ type: 'LOADING', value: false });
     }
@@ -276,27 +293,20 @@ export default function DoEPlanner() {
   async function analyzePlan() {
     try {
       if (!selectedPlanId) throw new Error('Select a plan first.');
+      if (!responseMetric) throw new Error('Select a response metric first.');
       dispatch({ type: 'LOADING', value: true });
       dispatch({ type: 'ERROR', value: '' });
       
-      // Mock analysis
-      const mockAnalysis: Analysis = {
-        main_effects: factorSpecs.map((f, i) => ({
-          factor: f.name,
-          effect: (Math.random() - 0.5) * 10,
-          p: Math.random() * 0.1,
-        })),
-        r2: 0.85 + Math.random() * 0.1,
-        adj_r2: 0.82 + Math.random() * 0.1,
-        rmse: 2.5 + Math.random() * 1.5,
-        anova: {},
-      };
+      const response = await axios.post(`${DOE_API_BASE}/plans/${selectedPlanId}/analyze`, {
+        plan_id: selectedPlanId,
+        response: responseMetric
+      });
       
-      dispatch({ type: 'SET', payload: { analysis: mockAnalysis } });
+      dispatch({ type: 'SET', payload: { analysis: response.data } });
       dispatch({ type: 'TOAST', value: 'Analysis complete.' });
       dispatch({ type: 'SET', payload: { tab: 'Plots' } });
     } catch (e: any) {
-      dispatch({ type: 'ERROR', value: e.message || String(e) });
+      dispatch({ type: 'ERROR', value: e.response?.data?.detail || e.message || String(e) });
     } finally {
       dispatch({ type: 'LOADING', value: false });
     }
@@ -305,26 +315,20 @@ export default function DoEPlanner() {
   async function recommendNext(n = 3) {
     try {
       if (!selectedPlanId) throw new Error('Select a plan first.');
+      if (!responseMetric) throw new Error('Select a response metric first.');
       dispatch({ type: 'LOADING', value: true });
       dispatch({ type: 'ERROR', value: '' });
       
-      // Mock recommendations
-      const mockRecs: Recommendation = {
-        points: Array.from({ length: n }, (_, i) => {
-          const point: Record<string, number> = { run: i + 1, score: 0.9 - i * 0.1 };
-          factorSpecs.forEach((f) => {
-            point[f.name] = f.low + Math.random() * (f.high - f.low);
-          });
-          return point;
-        }),
-        acq: 'EI',
-      };
+      const response = await axios.post(`${DOE_API_BASE}/plans/${selectedPlanId}/recommend-next`, {
+        plan_id: selectedPlanId,
+        response: responseMetric,
+        n
+      });
       
-      dispatch({ type: 'SET', payload: { recommendations: mockRecs } });
+      dispatch({ type: 'SET', payload: { recommendations: response.data } });
       dispatch({ type: 'TOAST', value: `Recommended next ${n} runs.` });
-      dispatch({ type: 'SET', payload: { tab: 'Optimize' } });
     } catch (e: any) {
-      dispatch({ type: 'ERROR', value: e.message || String(e) });
+      dispatch({ type: 'ERROR', value: e.response?.data?.detail || e.message || String(e) });
     } finally {
       dispatch({ type: 'LOADING', value: false });
     }
@@ -773,17 +777,37 @@ export default function DoEPlanner() {
 
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { title: 'Main Effects Plot', hint: 'Shows average response change per factor level.' },
-                  { title: 'Interaction / Cube Plot', hint: 'Shows factor interactions (2-way/3-way).' },
-                  { title: 'Contour Plot', hint: '2D slice (X vs Y) with other factors fixed.' },
-                  { title: 'Response Surface', hint: '3D surface plot for RSM designs (CCD/BB).' },
-                  { title: 'Residual Diagnostics', hint: 'QQ plot / residual vs fitted to validate model.' },
-                  { title: 'Pareto / Effect Ranking', hint: 'Standardized effects ranking (screening).' },
+                  { type: 'main_effects', title: 'Main Effects Plot', hint: 'Shows average response change per factor level.' },
+                  { type: 'interaction', title: 'Interaction / Cube Plot', hint: 'Shows factor interactions (2-way/3-way).' },
+                  { type: 'contour', title: 'Contour Plot', hint: '2D slice (X vs Y) with other factors fixed.' },
+                  { type: 'surface', title: 'Response Surface', hint: '3D surface plot for RSM designs (CCD/BB).' },
+                  { type: 'residuals', title: 'Residual Diagnostics', hint: 'QQ plot / residual vs fitted to validate model.' },
+                  { type: 'pareto', title: 'Pareto / Effect Ranking', hint: 'Standardized effects ranking (screening).' },
                 ].map((plot, i) => (
                   <div key={i} className="card">
                     <h3 className="font-semibold mb-2">{plot.title}</h3>
                     <div className="h-40 border border-dashed border-slate-600 rounded-lg flex items-center justify-center bg-slate-800/50 mb-2">
-                      <span className="text-slate-500 text-sm">[Plot area]</span>
+                      {selectedPlanId ? (
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await axios.get(`${DOE_API_BASE}/plans/${selectedPlanId}/plots`, {
+                                params: { plot_type: plot.type }
+                              });
+                              // TODO: Render plot using Plotly/Recharts
+                              console.log('Plot data:', response.data);
+                              alert(`Plot data loaded for ${plot.title}. Visualization integration needed.`);
+                            } catch (e: any) {
+                              alert(`Failed to load plot: ${e.response?.data?.detail || e.message}`);
+                            }
+                          }}
+                          className="text-cyan-400 hover:text-cyan-300 text-sm"
+                        >
+                          Load Plot Data
+                        </button>
+                      ) : (
+                        <span className="text-slate-500 text-sm">[Select plan to load plot]</span>
+                      )}
                     </div>
                     <p className="text-xs text-slate-500">{plot.hint}</p>
                   </div>

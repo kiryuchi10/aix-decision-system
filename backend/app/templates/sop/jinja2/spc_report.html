@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Executive Summary</h2>
+<div class="grid">
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Mean</div>
+    <b>{{ "%.3f"|format(spc.mean) }}</b>
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Std Dev</div>
+    <b>{{ "%.3f"|format(spc.std) }}</b>
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Cpk</div>
+    <b>{{ "%.2f"|format(spc.cpk) }}</b>
+    {% if spc.cpk >= 1.33 %}
+    <span class="badge success">Good</span>
+    {% elif spc.cpk >= 1.0 %}
+    <span class="badge warning">Marginal</span>
+    {% else %}
+    <span class="badge danger">Poor</span>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Cp</div>
+    <b>{{ "%.2f"|format(spc.cp) }}</b>
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Rule Violations</div>
+    <b>{{ spc.violation_count }}</b>
+    {% if spc.violation_count > 10 %}
+    <span class="badge danger">High</span>
+    {% elif spc.violation_count > 0 %}
+    <span class="badge warning">Medium</span>
+    {% else %}
+    <span class="badge success">None</span>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">UCL / LCL</div>
+    <b>{{ "%.2f"|format(spc.ucl) }} / {{ "%.2f"|format(spc.lcl) }}</b>
+  </div>
+</div>
+
+<hr>
+
+<h2>Control Charts</h2>
+{% for chart in spc.charts %}
+  <div class="chart-container">
+    <h3>{{ chart.metric }} - {{ chart.chart_type|upper }}</h3>
+    {% if chart.image_path %}
+    <img src="{{ chart.image_path }}" alt="{{ chart.metric }} Control Chart" style="width: 100%;">
+    {% else %}
+    <div style="padding: 40px; text-align: center; color: #94a3b8; background: #f1f5f9; border-radius: 4px;">
+      Chart image not available
+    </div>
+    {% endif %}
+    <div style="margin-top: 12px; font-size: 12px; color: #64748b;">
+      <b>Entity:</b> {{ chart.entity_type }} / {{ chart.entity_id }} |
+      <b>Time Range:</b> {{ chart.time_range }} |
+      <b>Data Points:</b> {{ chart.data_points }}
+    </div>
+  </div>
+{% endfor %}
+
+{% if not spc.charts %}
+<div class="summary-box">
+  <p>No control charts available for the selected time period.</p>
+</div>
+{% endif %}
+
+<hr>
+
+<h2>Rule Violations</h2>
+{% if spc.violations %}
+<table>
+  <tr>
+    <th>Time</th>
+    <th>Entity</th>
+    <th>Metric</th>
+    <th>Value</th>
+    <th>UCL/LCL</th>
+    <th>Rule</th>
+    <th>Severity</th>
+  </tr>
+  {% for v in spc.violations %}
+  <tr>
+    <td>{{ v.time }}</td>
+    <td>{{ v.entity }}</td>
+    <td>{{ v.metric }}</td>
+    <td><b>{{ "%.3f"|format(v.value) }}</b></td>
+    <td>{{ "%.2f"|format(v.ucl) }} / {{ "%.2f"|format(v.lcl) }}</td>
+    <td>{{ v.rule }}</td>
+    <td>
+      {% if v.severity == 'HIGH' %}
+      <span class="badge danger">HIGH</span>
+      {% elif v.severity == 'MEDIUM' %}
+      <span class="badge warning">MEDIUM</span>
+      {% else %}
+      <span class="badge">LOW</span>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="summary-box">
+  <p>No rule violations detected in the selected time period.</p>
+</div>
+{% endif %}
+
+<hr>
+
+<h2>Capability Trend</h2>
+{% if spc.cpk_trend %}
+<div class="chart-container">
+  <h3>Cpk Trend Over Time</h3>
+  {% if spc.cpk_trend_image %}
+  <img src="{{ spc.cpk_trend_image }}" alt="Cpk Trend Chart" style="width: 100%;">
+  {% endif %}
+</div>
+{% endif %}
+
+<hr>
+
+<h2>Recommended Actions</h2>
+{% if spc.actions %}
+<ul>
+  {% for action in spc.actions %}
+    <li><b>{{ action.priority }}:</b> {{ action.description }}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="summary-box">
+  <p>No specific actions recommended at this time.</p>
+</div>
+{% endif %}
+
+{% endblock %}

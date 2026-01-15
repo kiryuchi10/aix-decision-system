@@ -1,37 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Save } from 'lucide-react';
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+import { useProcessWindow } from '../features/settings/useProcessWindow';
+import { saveProcessWindow, saveAlarmThresholds, getAlarmThresholds } from '../features/settings/settings.api';
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('process-window');
-  const [processWindow, setProcessWindow] = useState([
-    { key: 'pressure_torr', unit: 'Torr', hardMin: 20, hardMax: 60 },
-    { key: 'bias_power_w', unit: 'W', hardMin: 0, hardMax: 500 },
-    { key: 'chuck_temp_c', unit: '°C', hardMin: 10, hardMax: 80 },
-  ]);
+  const { rows: processWindowRows, loading: pwLoading } = useProcessWindow();
+  const [processWindow, setProcessWindow] = useState(processWindowRows || []);
   const [alarmThresholds, setAlarmThresholds] = useState({
     enableWeco: true,
-    sigmaThreshold: '3.0',
-    ewmaLambda: '0.2',
+    sigmaThreshold: 3.0,
+    ewmaLambda: 0.2,
   });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (processWindowRows) {
+      setProcessWindow(processWindowRows);
+    }
+  }, [processWindowRows]);
+
+  useEffect(() => {
+    getAlarmThresholds()
+      .then((data) => {
+        setAlarmThresholds({
+          enableWeco: data.enableWeco,
+          sigmaThreshold: data.sigmaThreshold,
+          ewmaLambda: data.ewmaLambda,
+        });
+      })
+      .catch((err) => console.error('Failed to load alarm thresholds:', err));
+  }, []);
 
   const handleSaveProcessWindow = async () => {
+    setSaving(true);
     try {
-      // TODO: POST /api/v1/settings/process-window
-      alert('Process window saved (mock)');
-    } catch (error) {
+      await saveProcessWindow({ rows: processWindow });
+      alert('Process window saved successfully');
+    } catch (error: any) {
       console.error('Failed to save:', error);
+      alert(error.message || 'Failed to save process window');
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleSaveAlarmThresholds = async () => {
+    setSaving(true);
     try {
-      // TODO: POST /api/v1/settings/alarm-thresholds
-      alert('Alarm thresholds saved (mock)');
-    } catch (error) {
+      await saveAlarmThresholds(alarmThresholds);
+      alert('Alarm thresholds saved successfully');
+    } catch (error: any) {
       console.error('Failed to save:', error);
+      alert(error.message || 'Failed to save alarm thresholds');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -75,10 +98,11 @@ const SettingsPage: React.FC = () => {
             <h2 className="text-xl font-bold text-white">Guardrail Process Window</h2>
             <button
               onClick={handleSaveProcessWindow}
-              className="btn-primary flex items-center gap-2"
+              disabled={saving || pwLoading}
+              className="btn-primary flex items-center gap-2 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              Save
+              {saving ? 'Saving...' : 'Save'}
             </button>
           </div>
           <div className="space-y-4">
@@ -143,10 +167,11 @@ const SettingsPage: React.FC = () => {
             <h2 className="text-xl font-bold text-white">Alarm Thresholds</h2>
             <button
               onClick={handleSaveAlarmThresholds}
-              className="btn-primary flex items-center gap-2"
+              disabled={saving}
+              className="btn-primary flex items-center gap-2 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              Save
+              {saving ? 'Saving...' : 'Save'}
             </button>
           </div>
           <div className="space-y-4">
@@ -165,9 +190,10 @@ const SettingsPage: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">FDC Sigma Threshold</label>
               <input
-                type="text"
+                type="number"
+                step="0.1"
                 value={alarmThresholds.sigmaThreshold}
-                onChange={(e) => setAlarmThresholds({ ...alarmThresholds, sigmaThreshold: e.target.value })}
+                onChange={(e) => setAlarmThresholds({ ...alarmThresholds, sigmaThreshold: parseFloat(e.target.value) || 0 })}
                 className="w-full input-field"
                 placeholder="e.g., 3.0"
               />
@@ -175,9 +201,12 @@ const SettingsPage: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">EWMA Lambda</label>
               <input
-                type="text"
+                type="number"
+                step="0.01"
+                min="0"
+                max="1"
                 value={alarmThresholds.ewmaLambda}
-                onChange={(e) => setAlarmThresholds({ ...alarmThresholds, ewmaLambda: e.target.value })}
+                onChange={(e) => setAlarmThresholds({ ...alarmThresholds, ewmaLambda: parseFloat(e.target.value) || 0 })}
                 className="w-full input-field"
                 placeholder="e.g., 0.2"
               />
