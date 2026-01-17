@@ -20,6 +20,8 @@ import FDCPage from './pages/FDC';
 import CouplingPage from './pages/Coupling';
 import SettingsPage from './pages/Settings';
 import ProfilePage from './pages/Profile';
+import ProcessAnalysisPage from './pages/ProcessAnalysis';
+import MLPipelinePage from './pages/MLPipeline';
 
 const App: React.FC = () => {
   return (
@@ -57,6 +59,8 @@ const AppLayout: React.FC = () => {
             <Route path="/spc" element={<SPCPage />} />
             <Route path="/fdc" element={<FDCPage />} />
             <Route path="/coupling" element={<CouplingPage />} />
+            <Route path="/process-analysis" element={<ProcessAnalysisPage />} />
+            <Route path="/ml-pipeline" element={<MLPipelinePage />} />
             <Route path="/papers" element={<Papers />} />
             <Route path="/datasets" element={<Datasets />} />
             <Route path="/generator" element={<Generator />} />

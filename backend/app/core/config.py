@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     DRIFT_DETECTION_WINDOW: int = 100
     ALARM_THRESHOLD_SIGMA: float = 2.0
 
+    # AI / LLM (DeepSeek)
+    DEEPSEEK_API_KEY: Optional[str] = None
+    DEEPSEEK_MODEL: str = "deepseek-chat"
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com/v1"
+
     # Pydantic v2 config
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
