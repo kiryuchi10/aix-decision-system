@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Cpu, Play, CheckCircle, Clock, Award, TrendingUp, Zap } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 
 const ModelCard = ({ model, isSelected, onSelect, isBest }: { 
   model: any, 

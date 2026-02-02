@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
 import { Beaker, Play, Save, BarChart3, TrendingUp } from 'lucide-react';
 import axios from 'axios';
 
@@ -116,34 +116,6 @@ function reducer(state: State, action: Action): State {
     default:
       return state;
   }
-}
-
-// API helpers
-async function apiGet(path: string) {
-  const token = localStorage.getItem('token');
-  const headers: Record<string, string> = {};
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  const res = await fetch(`${DOE_API_BASE}${path}`, { credentials: 'include', headers });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-async function apiPost(path: string, body: any) {
-  const token = localStorage.getItem('token');
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  const res = await fetch(`${DOE_API_BASE}${path}`, {
-    method: 'POST',
-    headers,
-    credentials: 'include',
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 export default function DoEPlanner() {

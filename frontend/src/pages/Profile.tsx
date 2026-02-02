@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { User, Lock, Bell } from 'lucide-react';
-import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();

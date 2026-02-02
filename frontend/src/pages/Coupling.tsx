@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link as LinkIcon, Power, Sliders, Shield, CheckCircle, XCircle, FileText } from 'lucide-react';
 import axios from 'axios';
 import { useProcessWindow } from '../features/settings/useProcessWindow';

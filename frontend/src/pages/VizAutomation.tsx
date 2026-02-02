@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Database, Sparkles, Play, Save, Download, MessageSquare, Layout, BarChart3, TrendingUp, Filter, Eye, EyeOff, Grid3x3, ChevronDown, ChevronUp, X, Upload, FileText } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { apiPost, apiGet } from '../app/apiClient';
+import { Database, Sparkles, Play, Save, Download, MessageSquare, BarChart3, Eye, EyeOff, Grid3x3, ChevronDown, ChevronUp, X, Upload } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { apiPost } from '../app/apiClient';
 
 // ========== TYPES ==========
 interface ColumnMeta {
@@ -114,7 +114,7 @@ const KeywordToggle = ({ keyword, active, onToggle }: { keyword: Keyword; active
   );
 };
 
-const PlotCard = ({ title, type, children }: { title: string; type: string; children: React.ReactNode }) => {
+const PlotCard = ({ title, children }: { title: string; type: string; children: React.ReactNode }) => {
   return (
     <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
       <div className="flex items-center justify-between mb-3">
@@ -164,7 +164,7 @@ const DataStudioPage = () => {
     { id: 'step-1', order: 1, name: 'Handle Missing Values', type: 'missing', params: { method: 'fill_mean' } },
     { id: 'step-2', order: 2, name: 'Remove Outliers', type: 'outlier', params: { method: 'iqr', threshold: 1.5 } },
   ]);
-  const [uploading, setUploading] = useState(false);
+  const [, setUploading] = useState(false);
 
   const toggleKeyword = (id: string) => {
     const newSet = new Set(activeKeywords);

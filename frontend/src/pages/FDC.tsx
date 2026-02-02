@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Activity, AlertTriangle, CheckCircle, Clock, TrendingDown, TrendingUp, Zap } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart } from 'recharts';
+import { Activity, AlertTriangle, CheckCircle, Clock, TrendingUp, Zap } from 'lucide-react';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart } from 'recharts';
 import { useFdc } from '../features/fdc/useFdcAlarms';
 import { acknowledgeAlarm, resolveAlarm } from '../features/fdc/fdc.api';
 
@@ -228,7 +228,7 @@ const ProcessCapabilityPanel = ({ metrics }: { metrics: any }) => {
 };
 
 const FDCPage: React.FC = () => {
-  const { alarms: apiAlarms, cap: processCapability, loading } = useFdc();
+  const { alarms: apiAlarms, cap: processCapability } = useFdc();
   const [alarms, setAlarms] = useState<any[]>([]);
   const [filter, setFilter] = useState('ALL');
 

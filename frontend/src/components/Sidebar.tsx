@@ -3,9 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { 
   LayoutDashboard, 
   Brain, 
-  Activity, 
   Settings, 
-  Zap,
   BarChart3,
   FileText,
   Database,

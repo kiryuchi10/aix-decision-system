@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Database, TrendingUp, BarChart3, FileText, Download, Calendar } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Cell } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Generate mock process data
 const generateProcessData = (metric: string, days = 7) => {
@@ -154,7 +154,7 @@ const DistributionChart = ({ data, metric }: { data: any[], metric: string }) =>
   );
 };
 
-const StatisticsTable = ({ data, metric }: { data: any[], metric: string }) => {
+const StatisticsTable = ({ data, metric: _metric }: { data: any[]; metric: string }) => {
   const values = data.map(d => d.value);
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
   const sorted = [...values].sort((a, b) => a - b);

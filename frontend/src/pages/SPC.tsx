@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { BarChart3, TrendingUp, AlertCircle, RefreshCw, Download, Filter } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, Scatter, ScatterChart } from 'recharts';
-import { useSpcChart } from '../features/spc/useSpcChart';
+import { BarChart3, AlertCircle, RefreshCw, Download } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { getSpcViolations } from '../features/spc/spc.api';
 
 // Mock data generator
