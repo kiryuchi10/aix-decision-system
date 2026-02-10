@@ -11,9 +11,11 @@ from typing import Dict, Any, Optional
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pathlib import Path
 
-# Template directory
+# Template directory (app/services -> app)
 TEMPLATE_DIR = Path(__file__).parent.parent / "templates" / "sop" / "jinja2"
-OUTPUT_DIR = Path(__file__).parent.parent.parent / "app" / "data" / "reports"
+# Reports under app/data/reports (app/services -> app -> backend root; then app/data/reports)
+_backend_root = Path(__file__).resolve().parent.parent.parent
+OUTPUT_DIR = _backend_root / "app" / "data" / "reports"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Initialize Jinja2 environment
@@ -254,6 +256,49 @@ def render_rca_report(
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(html_content)
     
+    return str(filepath)
+
+
+def render_interlock_report(
+    interlock_data: Dict[str, Any],
+    report_meta: Dict[str, Any],
+    data_meta: Optional[Dict[str, Any]] = None,
+    figures_placeholder: Optional[Dict[str, str]] = None,
+    kpi_table: Optional[list] = None,
+    figures: Optional[list] = None,
+) -> str:
+    """
+    Render Interlock Response Report (figures + KPI tables).
+
+    interlock_data: {
+        'events_24h': int,
+        'release_count': int,
+        'stop_count': int,
+        'downtime_saved_hr': float,
+        'actions': list[str],
+    }
+    report_meta: same as other reports
+    figures_placeholder: { 'fdc_sensor_path', 'decision_ai_path', 'continual_domain_path', 'process_scatter_path' }
+    kpi_table: [ { 'metric_en', 'metric_ko', 'value' }, ... ]
+    figures: [ { 'title', 'caption', 'path' or 'placeholder' }, ... ]
+    """
+    template = env.get_template("interlock_report.html")
+    context = {
+        "report": {
+            **report_meta,
+            "generated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        },
+        "interlock": interlock_data,
+        "data": data_meta or {},
+        "figures_placeholder": figures_placeholder or {},
+        "kpi_table": kpi_table,
+        "figures": figures,
+    }
+    html_content = template.render(context)
+    filename = f"interlock_report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.html"
+    filepath = OUTPUT_DIR / filename
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(html_content)
     return str(filepath)
 
 

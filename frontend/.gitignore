@@ -1,32 +1,34 @@
 # AiX Decision System - Frontend .gitignore
+# Do not commit: .env, secrets, local config, or dev credentials.
+# Docs: only README (and docs/ if present) are tracked.
 
-*.md
-!README.md
-!docs/**/*.md
-
-
-# Environment files
+# ========== Security & secrets ==========
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.staging
-.env.prod
-.env.dev
+.env.*
+!.env.example
 *.env
+config.local.json
+settings.local.json
+**/secrets*
+**/*credentials*
+**/*apikey*
+**/*password*
+**/*token*
+ssl/
+certificates/
+*.pem
+*.key
+*.crt
+SECRETS.md
+API_KEYS.md
+PRODUCTION_SETUP.md
+CONFIG_NOTES.md
+.sentryclirc
 
-# Dependencies
+# ========== Dependencies & build ==========
 node_modules/
 /.pnp
 .pnp.js
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# Build outputs
 dist/
 dist-ssr/
 build/
@@ -36,97 +38,63 @@ out/
 .output/
 .vercel/
 .netlify/
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-.nyc_output
-
-# Grunt intermediate storage
-.grunt
-
-# Bower dependency directory
-bower_components
-
-# node-waf configuration
-.lock-wscript
-
-# Compiled binary addons
-build/Release
-
-# Dependency directories
-jspm_packages/
-
-# Snowpack dependency directory (https://snowpack.dev/)
-web_modules/
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional stylelint cache
-.stylelintcache
-
-# Microbundle cache
+*.tgz
+.yarn-integrity
+.cache
+.parcel-cache
+.vite/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+.rollup.cache/
 .rpt2_cache/
 .rts2_cache_cjs/
 .rts2_cache_es/
 .rts2_cache_umd/
+.local
+local.config.js
+local.config.ts
 
-# Optional REPL history
+# ========== Logs & runtime ==========
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+pids/
+*.pid
+*.seed
+*.pid.lock
+.npm
 .node_repl_history
 
-# Output of 'npm pack'
-*.tgz
+# ========== Testing & coverage ==========
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+playwright-report/
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
 
-# Yarn Integrity file
-.yarn-integrity
+# ========== TypeScript / tooling ==========
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+bundle-analyzer-report.html
+webpack-bundle-analyzer-report.html
+.scannerwork/
+lighthouse-reports/
+performance-reports/
+src/generated/
+generated/
+api-docs/
+mock-data/
+test-data/
 
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Vite
-.vite/
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
-
-# Rollup
-.rollup.cache/
-
-# Next.js
-.next/
-out/
-
-# Nuxt.js
-.nuxt/
-.output/
-
-# Gatsby files
-.cache/
-public
-
-# Storybook build outputs
-.out
-.storybook-out
-storybook-static
-
-# Temporary folders
-tmp/
-temp/
-
-# Editor directories and files
+# ========== IDE / OS ==========
 .vscode/
 !.vscode/extensions.json
 .idea/
@@ -136,106 +104,18 @@ temp/
 *.sln
 *.sw?
 *~
-
-# OS generated files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# ========== Markdown: only README (and docs if any) ==========
+*.md
+!README.md
+!docs/*.md
+!docs/**/*.md
 
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional stylelint cache
-.stylelintcache
-
-# Cypress
-cypress/videos/
-cypress/screenshots/
-cypress/downloads/
-
-# Testing
-coverage/
-.nyc_output/
-test-results/
-playwright-report/
-test-results/
-
-# Local development
-.local
-local.config.js
-local.config.ts
-
-# Backup files
+# ========== Backup / temp ==========
 *.bak
 *.backup
 *.old
-
-# Generated files
-src/generated/
-generated/
-
-# API documentation
-api-docs/
-
-# Static analysis
-.scannerwork/
-
-# Bundle analyzer
-bundle-analyzer-report.html
-
-# Webpack Bundle Analyzer
-webpack-bundle-analyzer-report.html
-
-# Source maps (if you don't want to commit them)
-*.map
-
-# Sentry
-.sentryclirc
-
-# Documentation with sensitive info
-DEPLOYMENT_NOTES.md
-PRODUCTION_SETUP.md
-SECRETS.md
-API_KEYS.md
-CONFIG_NOTES.md
-
-# Local configuration overrides
-config.local.json
-settings.local.json
-
-# SSL certificates
-ssl/
-certificates/
-*.pem
-*.key
-*.crt
-
-# Mock data
-mock-data/
-test-data/
-
-# Performance monitoring
-lighthouse-reports/
-performance-reports/
+tmp/
+temp/

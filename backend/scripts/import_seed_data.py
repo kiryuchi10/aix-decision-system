@@ -22,7 +22,7 @@ SEED_DIR = backend_dir / "app" / "data" / "seed"
 def import_csv_to_table(csv_path: Path, table_name: str) -> bool:
     """Import CSV to database table"""
     try:
-        print(f"📥 Reading {csv_path.name}...")
+        print(f"[*] Reading {csv_path.name}...")
         df = pd.read_csv(csv_path)
         
         # Clean datetime columns
@@ -34,7 +34,7 @@ def import_csv_to_table(csv_path: Path, table_name: str) -> bool:
                     pass
         
         # Import to database
-        print(f"💾 Importing {len(df)} rows to table '{table_name}'...")
+        print(f"[*] Importing {len(df)} rows to table '{table_name}'...")
         df.to_sql(
             table_name, 
             con=engine, 
@@ -43,10 +43,10 @@ def import_csv_to_table(csv_path: Path, table_name: str) -> bool:
             method='multi', 
             chunksize=1000
         )
-        print(f"✅ Imported {len(df)} rows from {csv_path.name} -> {table_name}")
+        print(f"[OK] Imported {len(df)} rows from {csv_path.name} -> {table_name}")
         return True
     except Exception as e:
-        print(f"❌ Failed to import {csv_path.name}: {e}")
+        print(f"[ERR] Failed to import {csv_path.name}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -56,7 +56,7 @@ def register_seed_folders():
     db: Session = next(get_db())
     registered = 0
     
-    print("\n📋 Registering seed files in catalog...")
+    print("\n[*] Registering seed files in catalog...")
     
     # Look for CSV files in seed directory
     for csv_file in SEED_DIR.glob("*.csv"):
@@ -77,7 +77,7 @@ def register_seed_folders():
         ).first()
         
         if existing:
-            print(f"⏭️  Already registered: {csv_file.name}")
+            print(f"[skip] Already registered: {csv_file.name}")
             continue
         
         # Read CSV to get schema
@@ -101,20 +101,20 @@ def register_seed_folders():
             )
             db.add(seed)
             registered += 1
-            print(f"✅ Registered: {csv_file.name} (process_type: {process_type}, rows: {len(df_full)})")
+            print(f"[OK] Registered: {csv_file.name} (process_type: {process_type}, rows: {len(df_full)})")
         except Exception as e:
-            print(f"⚠️  Could not register {csv_file.name}: {e}")
+            print(f"[WARN] Could not register {csv_file.name}: {e}")
     
     db.commit()
-    print(f"\n✅ Registered {registered} new seed files in catalog")
+    print(f"\n[OK] Registered {registered} new seed files in catalog")
     db.close()
 
 def main():
-    print("🚀 Starting seed data import...")
-    print(f"📁 Seed directory: {SEED_DIR}")
+    print("[*] Starting seed data import...")
+    print(f"[*] Seed directory: {SEED_DIR}")
     
     if not SEED_DIR.exists():
-        print(f"❌ Seed directory not found: {SEED_DIR}")
+        print(f"[ERR] Seed directory not found: {SEED_DIR}")
         return
     
     # Import CSV files to tables
@@ -128,7 +128,7 @@ def main():
         "kpi_hourly": "kpi_hourly.csv",
     }
     
-    print("\n📊 Step 1: Importing CSV files to database tables...")
+    print("\n[*] Step 1: Importing CSV files to database tables...")
     imported = 0
     for table_name, filename in csv_files.items():
         csv_path = SEED_DIR / filename
@@ -136,15 +136,15 @@ def main():
             if import_csv_to_table(csv_path, table_name):
                 imported += 1
         else:
-            print(f"⚠️  File not found: {filename}")
+            print(f"[WARN] File not found: {filename}")
     
-    print(f"\n✅ Imported {imported}/{len(csv_files)} CSV files")
+    print(f"\n[OK] Imported {imported}/{len(csv_files)} CSV files")
     
     # Register in seed catalog
-    print("\n📋 Step 2: Registering seed files in catalog...")
+    print("\n[*] Step 2: Registering seed files in catalog...")
     register_seed_folders()
     
-    print("\n🎉 Seed data import complete!")
+    print("\n[OK] Seed data import complete!")
 
 if __name__ == "__main__":
     main()

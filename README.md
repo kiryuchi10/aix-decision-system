@@ -13,6 +13,20 @@
 
 ---
 
+## 📋 Source of truth (docs)
+
+| Document | Description |
+|----------|-------------|
+| [docs/PROJECT_SUMMARY.md](docs/PROJECT_SUMMARY.md) | **디렉터리 구조, 워크플로우, API 요약, 아키텍처** |
+| [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | Requirements (10 areas: Dashboard, FDC, Recommendations, DoE, ML Pipeline, Coupling, Data, Security, Performance, DevOps) |
+| [docs/DESIGN.md](docs/DESIGN.md) | Architecture, API structure, data models, DB schema, error handling, testing, deployment |
+| [docs/API_CONTRACT.md](docs/API_CONTRACT.md) | API 명세 (Artifact-First, Datasets, Viz, RCA, Auth 등) |
+| [docs/SUPPLEMENTS.md](docs/SUPPLEMENTS.md) | Index of supplement docs (no credentials here) |
+
+**Security & repo:** Do not commit `.env`, secrets, API keys, or credentials. Use `.env.example` as a template. Only `README.md` and `docs/` (supplements) are tracked as markdown. Database schema is in `backend/schema.sql`; dumps and backups are gitignored.
+
+---
+
 ## 🎯 프로젝트 개요
 
 ### 문제 정의
@@ -117,6 +131,12 @@
 - Node.js 18+
 - Docker & Docker Compose
 
+### How to run locally (no Docker)
+1. **Backend:** `cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload`
+2. **DB:** Apply `backend/schema.sql`. If the `datasets` table already exists without `stage`, run: `ALTER TABLE datasets ADD COLUMN stage VARCHAR(20) NOT NULL DEFAULT 'DRAFT';`
+3. **Frontend:** `cd frontend && npm install && npm run dev`
+4. **Flow:** Datasets → Upload CSV/.mat → Preview (POST) → Undo or Commit → Viz Automation: select committed dataset → Run step → view artifacts (png/csv/json).
+
 ### Option 1: Docker Compose (권장)
 
 ```bash
@@ -183,7 +203,16 @@ curl -X POST "http://localhost:8000/api/v1/ml-pipeline/run-automated-pipeline" \
   }'
 ```
 
-### 2. 파이프라인 상태 확인
+### 2. Notebooks: .mat → artifacts (Viz Automation)
+
+Notebooks under `notebooks/` load `.mat` files (MACHINE_Data.mat, RFM_DATA.mat, OES_DATA.mat) and produce parquet/npz/figures for the Viz Automation pipeline.
+
+- **How to run**: See [notebooks/README.md](notebooks/README.md).
+- **Steps**: 01 load & inventory → 02 long table → 03 clean/resample → 04 feature engineering → 05 PCA/clustering → 06 models & R/Y/G policy.
+- **Outputs**: `data/interim/inventory.parquet`, `timeseries_long.parquet`, `data/processed/timeseries_resampled.npz`, `features_tabular.parquet`, `embeddings.parquet`, `cluster_labels.parquet`, `predictions.parquet`, `docs/THRESHOLD_POLICY.md`, `reports/figures/*.png`.
+- **Helper**: `backend/app/etchfdc/io/mat_reader.py` (`load_mat`, `inspect_mat`).
+
+### 3. 파이프라인 상태 확인
 
 ```bash
 curl "http://localhost:8000/api/v1/ml-pipeline/pipeline-status/{pipeline_id}"

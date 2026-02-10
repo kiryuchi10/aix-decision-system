@@ -1,73 +1,90 @@
 # AiX Decision System - Backend .gitignore
+# Do not commit: .env, secrets, dumps, or dev credentials.
+# Schema: backend/schema.sql and backend/scripts/setup_database.sql are tracked.
 
-# Environment and configuration
+# ========== Security & secrets ==========
 .env
 .env.*
+!.env.example
+*.env
 config/secrets.json
 config/production.json
 app/core/secrets.py
+**/secrets*
+**/*credentials*
+**/*apikey*
+**/*password*
+**/*token*
+secrets/
+private_keys/
+certificates/
+ssl/
+SECRETS.md
+API_KEYS.md
+PRODUCTION_SETUP.md
+DEPLOYMENT_NOTES.md
+SECURITY.md
+local_settings.py
+development.py
 
-# Database files
+# ========== Database: dumps/backups only (schema is tracked) ==========
+dump*.sql
+backup*.sql
+*_backup.sql
 *.db
 *.sqlite
 *.sqlite3
-aix_system.db
 database/data/
 migrations/versions/*.py
 !migrations/versions/__init__.py
 
-# Python
+# ========== Data & uploads ==========
+data/
+datasets/
+uploads/
+downloads/
+*.csv
+*.parquet
+*.json.bak
+
+# ========== Python ==========
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Virtual environments
+.eggs/
 venv/
 env/
 ENV/
 .venv/
-.env/
 pip-log.txt
 pip-delete-this-directory.txt
+.python-version
+Pipfile.lock
+poetry.lock
+*.sage.py
+.ropeproject
+.spyderproject
+.spyproject
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+cython_debug/
+/site
 
-# Testing
-.coverage
-.pytest_cache/
-.tox/
-.nox/
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-htmlcov/
-.cache
-nosetests.xml
-coverage/
-test-results/
-
-# ML Models and artifacts
+# ========== ML / artifacts ==========
 models/
 ml_models/
 ml_experiments/
+mlruns/
+checkpoints/
+experiments/
+artifacts/
 *.pkl
 *.joblib
 *.h5
@@ -75,272 +92,53 @@ ml_experiments/
 *.onnx
 *.pt
 *.pth
-checkpoints/
-experiments/
-artifacts/
-mlruns/
 
-# Logs
-logs/
-*.log
-*.log.*
-log/
-app.log
-error.log
-access.log
-celery.log
-
-# Data files
-data/
-datasets/
-uploads/
-downloads/
-*.csv
-*.json.bak
-*.parquet
-backup*.sql
-dump*.sql
-
-# Jupyter Notebook
-.ipynb_checkpoints
-*.ipynb
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# poetry
-poetry.lock
-
-# Celery
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# FastAPI specific
-.pytest_cache
-.coverage
-htmlcov/
-
-# Alembic
-alembic/versions/*.py
-!alembic/versions/__init__.py
-
-# Local development
-local_settings.py
-development.py
-
-# Backup files
-*.bak
-*.backup
-*.old
-
-# Temporary files
-*.tmp
-*.temp
-.cache/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Docker
-.dockerignore.bak
-
-# Security
-secrets/
-private_keys/
-certificates/
-ssl/
-
-# Performance profiling
-*.prof
-*.profile
-
-# Documentation with sensitive info
-DEPLOYMENT_NOTES.md
-PRODUCTION_SETUP.md
-SECRETS.md
-API_KEYS.md
-
-########################################
-# 🔐 Security & Secrets (ABSOLUTE)
-########################################
-
-# Environment variables
-.env
-.env.*
-*.env
-
-# Secrets & credentials
-**/secrets.*
-**/*secret*
-**/*credentials*
-**/*apikey*
-**/*api_key*
-**/*token*
-**/*password*
-**/*passwd*
-**/*private*
-**/*oauth*
-**/*gmail*
-**/*mail*
-**/*auth*
-
-# Explicit sensitive docs (never commit)
-SECRETS.md
-API_KEYS.md
-PRODUCTION_SETUP.md
-DEPLOYMENT_NOTES.md
-SECURITY.md
-
-########################################
-# 🗄️ Databases & Dumps
-########################################
-*.db
-*.sqlite
-*.sqlite3
-*.sql
-dump*.sql
-backup*.sql
-
-########################################
-# 🧪 Data files (runtime / user)
-########################################
-data/
-datasets/
-uploads/
-downloads/
-*.csv
-*.parquet
-*.json.bak
-
-########################################
-# 🤖 ML / AI artifacts
-########################################
-models/
-ml_models/
-ml_experiments/
-mlruns/
-checkpoints/
-experiments/
-artifacts/
-*.pkl
-*.joblib
-*.h5
-*.onnx
-*.pt
-*.pth
-
-########################################
-# 🐍 Python
-########################################
-__pycache__/
-*.py[cod]
-*$py.class
-.Python
-build/
-dist/
-*.egg-info/
-.eggs/
-
-########################################
-# 🌱 Virtual environments
-########################################
-venv/
-env/
-ENV/
-.venv/
-
-########################################
-# 🧪 Testing / Coverage
-########################################
+# ========== Testing ==========
 .pytest_cache/
 .coverage
 coverage.xml
 htmlcov/
 test-results/
+.tox/
+.nox/
+*.cover
+.hypothesis/
+.cache
+nosetests.xml
 
-########################################
-# 📓 Notebooks
-########################################
+# ========== Logs ==========
+logs/
+*.log
+app.log
+error.log
+access.log
+celery.log
+celerybeat-schedule
+celerybeat.pid
+
+# ========== Notebooks ==========
 .ipynb_checkpoints/
 *.ipynb
+profile_default/
+ipython_config.py
 
-########################################
-# 🧠 IDE / Editor
-########################################
+# ========== Alembic (optional: keep versions if you use them) ==========
+# alembic/versions/*.py
+# !alembic/versions/__init__.py
+
+# ========== IDE / OS ==========
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-########################################
-# 🖥️ OS
-########################################
 .DS_Store
 Thumbs.db
-
-########################################
-# 🐳 Docker
-########################################
+*.bak
+*.backup
+*.old
+*.tmp
+*.temp
 .dockerignore.bak
-
-########################################
-# ⚠️ Markdown handling (IMPORTANT)
-########################################
-
-# Ignore ALL markdown by default
-*.md
-
-# ✅ But allow public / safe docs explicitly
-!README.md
-!docs/**/*.md
-!design.md
-!architecture.md
-!CHANGELOG.md
-
-*.md
-!README.md
-!docs/**/*.md
-
+*.prof
+*.profile

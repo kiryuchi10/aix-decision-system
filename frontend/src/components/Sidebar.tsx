@@ -11,7 +11,8 @@ import {
   MessageSquare,
   AlertTriangle,
   Image,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Shield
 } from 'lucide-react'
 
 const Sidebar: React.FC = () => {
@@ -24,8 +25,10 @@ const Sidebar: React.FC = () => {
     { name: 'Process Analysis', href: '/process-analysis', icon: Database },
     { name: 'ML Pipeline', href: '/ml-pipeline', icon: Brain },
     { name: 'Coupling Control', href: '/coupling', icon: LinkIcon },
+    { name: 'STOP/Release AI', href: '/interlock', icon: Shield },
     { name: 'Viz Automation', href: '/viz-automation', icon: Image },
     { name: 'Data Generator', href: '/data-generator', icon: Sparkles },
+    { name: 'Process Window', href: '/window', icon: LayoutDashboard },
     { name: 'DoE Planner', href: '/doe', icon: BarChart3 },
     { name: 'Papers', href: '/papers', icon: FileText },
     { name: 'Datasets', href: '/datasets', icon: Database },

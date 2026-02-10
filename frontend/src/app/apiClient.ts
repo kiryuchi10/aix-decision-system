@@ -1,9 +1,10 @@
 /**
  * Centralized API Client
- * Supports real server and mock switching via environment variables
+ * Supports real server and mock switching via environment variables.
+ * VITE_API_BASE_URL should be server root (e.g. http://localhost:8000); we always append /api/v1.
  */
-
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1') as string;
+const SERVER = ((import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000').replace(/\/$/, '');
+const BASE_URL = SERVER.endsWith('/api/v1') ? SERVER : `${SERVER}/api/v1`;
 const USE_MOCKS = (import.meta.env.VITE_USE_MOCKS === 'true') as boolean;
 
 export type ApiError = {

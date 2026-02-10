@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interlock Response Solution | Interlock 대응 솔루션</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      min-height: 100vh;
+      color: #e2e8f0;
+      padding: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .slide {
+      max-width: 1000px;
+      width: 100%;
+      background: rgba(30, 41, 59, 0.9);
+      border-radius: 16px;
+      padding: 48px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      border: 1px solid rgba(71, 85, 105, 0.5);
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+      color: #f8fafc;
+      font-weight: 700;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 32px;
+    }
+    .flow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 24px 0;
+    }
+    .step {
+      flex: 1;
+      min-width: 180px;
+      background: rgba(51, 65, 85, 0.6);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      border: 1px solid rgba(71, 85, 105, 0.6);
+    }
+    .step h3 {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .step .en { font-size: 15px; color: #f8fafc; font-weight: 600; }
+    .step .ko { font-size: 13px; color: #cbd5e1; margin-top: 4px; }
+    .arrow {
+      color: #64748b;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .outcomes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 32px;
+    }
+    .outcome {
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .outcome.release {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .outcome.stop {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .outcome .label { font-size: 12px; color: #94a3b8; }
+    .outcome .value { font-size: 18px; font-weight: 700; }
+    .outcome.release .value { color: #10b981; }
+    .outcome.stop .value { color: #ef4444; }
+    .goal {
+      margin-top: 28px;
+      padding: 16px 20px;
+      background: rgba(59, 130, 246, 0.2);
+      border-left: 4px solid #3b82f6;
+      border-radius: 8px;
+      font-size: 15px;
+      color: #e2e8f0;
+    }
+    .goal strong { color: #93c5fd; }
+  </style>
+</head>
+<body>
+  <div class="slide">
+    <h1>Interlock Response Solution</h1>
+    <p class="subtitle">Interlock 대응 솔루션 · FDC → AI 판정 → 설비 유실 시간 감축</p>
+
+    <div class="flow">
+      <div class="step">
+        <h3>Step 1</h3>
+        <div class="en">FDC Sensor Data</div>
+        <div class="ko">FDC 센서 데이터</div>
+        <p style="margin-top:8px;font-size:12px;color:#64748b;">Interlock 발생 여부 모니터링</p>
+      </div>
+      <span class="arrow">→</span>
+      <div class="step">
+        <h3>Step 2</h3>
+        <div class="en">STOP/Release Decision AI</div>
+        <div class="ko">STOP/Release 판정 AI</div>
+        <p style="margin-top:8px;font-size:12px;color:#64748b;">정상 / STOP / Release</p>
+      </div>
+      <span class="arrow">→</span>
+      <div class="step">
+        <h3>Step 3</h3>
+        <div class="en">Action</div>
+        <div class="ko">조치</div>
+        <p style="margin-top:8px;font-size:12px;color:#64748b;">간단 점검 후 Release / STOP 후 수리</p>
+      </div>
+    </div>
+
+    <div class="outcomes">
+      <div class="outcome release">
+        <div>
+          <div class="label">Path A · 경로 A</div>
+          <div class="value">Release (간단한 점검 후 Release)</div>
+        </div>
+      </div>
+      <div class="outcome stop">
+        <div>
+          <div class="label">Path B · 경로 B</div>
+          <div class="value">STOP (STOP 후 설비 수리)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="goal">
+      <strong>Goal · 목표:</strong> 설비 유실 시간 감축 (Reduce equipment downtime)
+    </div>
+  </div>
+</body>
+</html>

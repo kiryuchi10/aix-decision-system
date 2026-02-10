@@ -1,11 +1,12 @@
 """
 Database Query Service for Chat Context
 Provides database schema information and query capabilities for AI chat.
+Dialect-agnostic: works with SQLite (no information_schema) and MySQL.
 """
 from sqlalchemy.orm import Session
-from sqlalchemy import text, inspect
+from sqlalchemy import text
 from typing import Dict, List, Optional, Any
-import json
+import re
 
 class DatabaseQueryService:
     """Service for querying database schema and data for chat context"""
@@ -14,74 +15,116 @@ class DatabaseQueryService:
         self.db = db
     
     def get_schema_summary(self) -> Dict[str, Any]:
-        """Get summary of database schema"""
-        schema_info = {
+        """Get summary of database schema (SQLite and MySQL compatible)."""
+        schema_info: Dict[str, Any] = {
             "tables": [],
             "table_count": 0
         }
+        dialect_name = self.db.get_bind().dialect.name
         
-        # Query to get all tables
-        result = self.db.execute(text("""
-            SELECT TABLE_NAME, TABLE_ROWS
-            FROM information_schema.TABLES
-            WHERE TABLE_SCHEMA = DATABASE()
-            AND TABLE_TYPE = 'BASE TABLE'
-            ORDER BY TABLE_NAME
-        """))
-        
-        for row in result:
-            table_name = row[0]
-            table_rows = row[1] if row[1] else 0
-            
-            # Get columns for each table
-            columns_result = self.db.execute(text(f"""
-                SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_KEY
-                FROM information_schema.COLUMNS
-                WHERE TABLE_SCHEMA = DATABASE()
-                AND TABLE_NAME = '{table_name}'
-                ORDER BY ORDINAL_POSITION
+        if dialect_name == "sqlite":
+            # SQLite: use sqlite_master and pragma table_info
+            result = self.db.execute(text("""
+                SELECT name FROM sqlite_master
+                WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+                ORDER BY name
             """))
-            
-            columns = []
-            for col in columns_result:
-                columns.append({
-                    "name": col[0],
-                    "type": col[1],
-                    "nullable": col[2] == "YES",
-                    "key": col[3] if col[3] else None
+            table_names = [row[0] for row in result]
+            for table_name in table_names:
+                columns = []
+                try:
+                    pragma = self.db.execute(text(f"PRAGMA table_info({table_name})"))
+                    for col in pragma:
+                        columns.append({
+                            "name": col[1],
+                            "type": col[2] or "unknown",
+                            "nullable": col[3] == 0,
+                            "key": "PRI" if col[5] and col[5] > 0 else None
+                        })
+                except Exception:
+                    pass
+                try:
+                    count_row = self.db.execute(text(f"SELECT COUNT(*) FROM [{table_name}]")).fetchone()
+                    row_count = count_row[0] if count_row else 0
+                except Exception:
+                    row_count = 0
+                schema_info["tables"].append({
+                    "name": table_name,
+                    "row_count": row_count,
+                    "columns": columns
                 })
-            
-            schema_info["tables"].append({
-                "name": table_name,
-                "row_count": table_rows,
-                "columns": columns
-            })
-            schema_info["table_count"] += 1
+                schema_info["table_count"] += 1
+        else:
+            # MySQL / MariaDB: information_schema
+            result = self.db.execute(text("""
+                SELECT TABLE_NAME, TABLE_ROWS
+                FROM information_schema.TABLES
+                WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_TYPE = 'BASE TABLE'
+                ORDER BY TABLE_NAME
+            """))
+            for row in result:
+                table_name = row[0]
+                table_rows = row[1] if row[1] else 0
+                columns_result = self.db.execute(text(f"""
+                    SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_KEY
+                    FROM information_schema.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME = :tname
+                    ORDER BY ORDINAL_POSITION
+                """), {"tname": table_name})
+                columns = []
+                for col in columns_result:
+                    columns.append({
+                        "name": col[0],
+                        "type": col[1],
+                        "nullable": col[2] == "YES",
+                        "key": col[3] if col[3] else None
+                    })
+                schema_info["tables"].append({
+                    "name": table_name,
+                    "row_count": table_rows,
+                    "columns": columns
+                })
+                schema_info["table_count"] += 1
         
         return schema_info
     
     def get_table_info(self, table_name: str) -> Optional[Dict[str, Any]]:
-        """Get detailed information about a specific table"""
+        """Get detailed information about a specific table (SQLite and MySQL)."""
+        if not table_name or not re.match(r"^[a-zA-Z0-9_]+$", table_name):
+            return None
         try:
-            # Get table structure
-            columns_result = self.db.execute(text(f"""
-                SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_KEY, COLUMN_DEFAULT, EXTRA
-                FROM information_schema.COLUMNS
-                WHERE TABLE_SCHEMA = DATABASE()
-                AND TABLE_NAME = '{table_name}'
-                ORDER BY ORDINAL_POSITION
-            """))
-            
+            dialect_name = self.db.get_bind().dialect.name
             columns = []
-            for col in columns_result:
-                columns.append({
-                    "name": col[0],
-                    "type": col[1],
-                    "nullable": col[2] == "YES",
-                    "key": col[3] if col[3] else None,
-                    "default": col[4],
-                    "extra": col[5]
-                })
+            if dialect_name == "sqlite":
+                pragma = self.db.execute(text(f"PRAGMA table_info([{table_name}])"))
+                for col in pragma:
+                    columns.append({
+                        "name": col[1],
+                        "type": col[2] or "unknown",
+                        "nullable": col[3] == 0,
+                        "key": "PRI" if col[5] and col[5] > 0 else None,
+                        "default": col[4],
+                        "extra": None
+                    })
+            else:
+                columns_result = self.db.execute(text("""
+                    SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_KEY, COLUMN_DEFAULT, EXTRA
+                    FROM information_schema.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME = :tname
+                    ORDER BY ORDINAL_POSITION
+                """), {"tname": table_name})
+                for col in columns_result:
+                    columns.append({
+                        "name": col[0],
+                        "type": col[1],
+                        "nullable": col[2] == "YES",
+                        "key": col[3] if col[3] else None,
+                        "default": col[4],
+                        "extra": col[5]
+                    })
             
             # Get sample data (first 5 rows)
             try:

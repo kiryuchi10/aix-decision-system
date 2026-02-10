@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import os
 import uuid
 from datetime import datetime
@@ -34,9 +34,9 @@ class ExtractionRequest(BaseModel):
 class ExtractionResponse(BaseModel):
     id: int
     raw_text: str
-    schema_json: str
+    schema_data: str = Field(..., alias="schema_json", serialization_alias="schema_json")
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 

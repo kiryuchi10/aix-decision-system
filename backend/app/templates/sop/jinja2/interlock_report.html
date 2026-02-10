@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Interlock Response Summary | Interlock 대응 요약</h2>
+<div class="summary-box">
+  {{ report.context | default('FDC sensor data is monitored for interlock events. STOP/Release Decision AI recommends Release (simple check) or STOP (equipment repair). Goal: reduce equipment downtime.') }}
+</div>
+
+<div class="grid">
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Interlock Events (24h)</div>
+    <b>{{ interlock.events_24h | default(0) }}</b>
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Release (간단 점검 후)</div>
+    <b>{{ interlock.release_count | default(0) }}</b>
+    <span class="badge success">OK</span>
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">STOP (설비 수리)</div>
+    <b>{{ interlock.stop_count | default(0) }}</b>
+    <span class="badge danger">STOP</span>
+  </div>
+  <div class="card">
+    <div style="color: #64748b; font-size: 12px;">Downtime Saved (est. hr)</div>
+    <b>{{ "%.1f"|format(interlock.downtime_saved_hr | default(0)) }}</b>
+  </div>
+</div>
+
+<hr>
+
+<h2>Figures | 도면</h2>
+
+{% if figures %}
+  {% for fig in figures %}
+  <div class="chart-container">
+    <h3>{{ fig.title }}</h3>
+    <p class="meta" style="margin-bottom:8px;">{{ fig.caption }}</p>
+    {% if fig.path %}
+    <img src="{{ fig.path }}" alt="{{ fig.title }}" style="max-width:100%; height:auto;">
+    {% else %}
+    <div style="background:#f1f5f9; padding:40px; text-align:center; color:#64748b;">[Figure: {{ fig.placeholder }}]</div>
+    {% endif %}
+  </div>
+  <hr>
+  {% endfor %}
+{% else %}
+  <div class="grid">
+    <div class="chart-container">
+      <h3>1. FDC Sensor Data & Interlock Monitoring</h3>
+      <p class="meta">FDC 센서 데이터 · Interlock 발생 여부 모니터링</p>
+      {% if figures_placeholder.fdc_sensor_path %}
+      <img src="{{ figures_placeholder.fdc_sensor_path }}" alt="FDC Sensor" style="max-width:100%;">
+      {% else %}
+      <div style="background:#f1f5f9; padding:40px; text-align:center; color:#64748b;">[Figure 1: FDC sensor plot]</div>
+      {% endif %}
+    </div>
+    <div class="chart-container">
+      <h3>2. STOP/Release Decision AI</h3>
+      <p class="meta">STOP/Release 판정 AI (LSTM/Transformer)</p>
+      {% if figures_placeholder.decision_ai_path %}
+      <img src="{{ figures_placeholder.decision_ai_path }}" alt="Decision AI" style="max-width:100%;">
+      {% else %}
+      <div style="background:#f1f5f9; padding:40px; text-align:center; color:#64748b;">[Figure 2: AI architecture]</div>
+      {% endif %}
+    </div>
+    <div class="chart-container">
+      <h3>3. Continual Learning & Domain Adaptation</h3>
+      <p class="meta">Continual Learning / Domain Adaptation</p>
+      {% if figures_placeholder.continual_domain_path %}
+      <img src="{{ figures_placeholder.continual_domain_path }}" alt="Continual/Domain" style="max-width:100%;">
+      {% else %}
+      <div style="background:#f1f5f9; padding:40px; text-align:center; color:#64748b;">[Figure 3: CL/DA diagram]</div>
+      {% endif %}
+    </div>
+    <div class="chart-container">
+      <h3>4. Process Status (P1/P2) · STOP vs Release</h3>
+      <p class="meta">Process별 STOP/Release 분포</p>
+      {% if figures_placeholder.process_scatter_path %}
+      <img src="{{ figures_placeholder.process_scatter_path }}" alt="Process scatter" style="max-width:100%;">
+      {% else %}
+      <div style="background:#f1f5f9; padding:40px; text-align:center; color:#64748b;">[Figure 4: P1-P2 scatter]</div>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+
+<hr>
+
+<h2>KPI Table | 핵심 지표</h2>
+<table>
+  <tr>
+    <th>Metric (EN)</th>
+    <th>지표 (KO)</th>
+    <th>Value</th>
+  </tr>
+  {% if kpi_table %}
+  {% for row in kpi_table %}
+  <tr>
+    <td>{{ row.metric_en }}</td>
+    <td>{{ row.metric_ko }}</td>
+    <td><b>{{ row.value }}</b></td>
+  </tr>
+  {% endfor %}
+  {% else %}
+  <tr><td>Interlock events (24h)</td><td>Interlock 발생 (24h)</td><td>{{ interlock.events_24h | default(0) }}</td></tr>
+  <tr><td>Release count</td><td>Release 건수</td><td>{{ interlock.release_count | default(0) }}</td></tr>
+  <tr><td>STOP count</td><td>STOP 건수</td><td>{{ interlock.stop_count | default(0) }}</td></tr>
+  <tr><td>Downtime saved (hr)</td><td>유실 시간 절감 (hr)</td><td>{{ "%.1f"|format(interlock.downtime_saved_hr | default(0)) }}</td></tr>
+  {% endif %}
+</table>
+
+<hr>
+<h2>Recommended Actions | 권장 조치</h2>
+<ul>
+  {% for action in interlock.actions | default([]) %}
+  <li>{{ action }}</li>
+  {% endfor %}
+</ul>
+{% if not interlock.actions %}
+  <li>Review STOP events for root cause.</li>
+  <li>Calibrate thresholds if Release rate is too high.</li>
+{% endif %}
+
+{% endblock %}

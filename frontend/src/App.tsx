@@ -18,10 +18,13 @@ import DoEPlanner from './pages/DoEPlanner';
 import SPCPage from './pages/SPC';
 import FDCPage from './pages/FDC';
 import CouplingPage from './pages/Coupling';
+import InterlockPage from './pages/Interlock';
 import SettingsPage from './pages/Settings';
 import ProfilePage from './pages/Profile';
 import ProcessAnalysisPage from './pages/ProcessAnalysis';
 import MLPipelinePage from './pages/MLPipeline';
+import VizAutomationPage from './pages/VizAutomation';
+import ProcessWindowPage from './pages/ProcessWindow';
 
 const App: React.FC = () => {
   return (
@@ -59,13 +62,16 @@ const AppLayout: React.FC = () => {
             <Route path="/spc" element={<SPCPage />} />
             <Route path="/fdc" element={<FDCPage />} />
             <Route path="/coupling" element={<CouplingPage />} />
+            <Route path="/interlock" element={<InterlockPage />} />
             <Route path="/process-analysis" element={<ProcessAnalysisPage />} />
             <Route path="/ml-pipeline" element={<MLPipelinePage />} />
+            <Route path="/viz-automation" element={<VizAutomationPage />} />
             <Route path="/papers" element={<Papers />} />
             <Route path="/datasets" element={<Datasets />} />
             <Route path="/generator" element={<Generator />} />
             <Route path="/data-generator" element={<Generator />} />
             <Route path="/chat" element={<Chat />} />
+            <Route path="/window" element={<ProcessWindowPage />} />
             <Route path="/doe" element={<DoEPlanner />} />
             <Route path="/ml-comparison" element={<MLModelComparison />} />
             <Route path="/settings" element={<SettingsPage />} />

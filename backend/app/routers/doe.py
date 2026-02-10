@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Dict, Optional
@@ -6,10 +6,20 @@ from datetime import datetime
 import random
 import uuid
 import json
+import csv
+import io
 
 from app.core.database import get_db
 from app.routers.auth import get_current_user
 from app.models.user import User
+from app.models.doe_run import DOERun, DOEMeasurement
+from app.services.doe_service import (
+    get_overlay_points,
+    get_run_detail,
+    main_effects_data,
+    interaction_data,
+    importance_data,
+)
 
 router = APIRouter(prefix="/doe", tags=["DoE Planner"])
 
@@ -293,3 +303,231 @@ async def get_plots(
             "y_label": "Response"
         }
     }
+
+
+# ---------- VPD DOE: overlay, runs, analysis ----------
+@router.get("/overlay-points")
+async def overlay_points(
+    metric_key: str = Query(..., description="e.g. defect_rate, yield"),
+    date_from: Optional[datetime] = Query(None),
+    date_to: Optional[datetime] = Query(None),
+    tool_id: Optional[str] = Query(None),
+    recipe_id: Optional[str] = Query(None),
+    batch_id: Optional[str] = Query(None),
+    outlier: bool = Query(False),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Lightweight points for heatmap overlay (run_id, temp_c, rh_pct, vpd_kpa, metric_value, ...)."""
+    points = get_overlay_points(
+        db, metric_key,
+        date_from=date_from, date_to=date_to,
+        tool_id=tool_id, recipe_id=recipe_id, batch_id=batch_id,
+        outlier=outlier,
+    )
+    return {"metric_key": metric_key, "points": points}
+
+
+@router.get("/runs")
+async def list_doe_runs(
+    date_from: Optional[datetime] = Query(None),
+    date_to: Optional[datetime] = Query(None),
+    tool_id: Optional[str] = Query(None),
+    recipe_id: Optional[str] = Query(None),
+    batch_id: Optional[str] = Query(None),
+    metric_key: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List DOE runs with optional filters."""
+    q = db.query(DOERun)
+    if date_from:
+        q = q.filter(DOERun.started_at >= date_from)
+    if date_to:
+        q = q.filter(DOERun.started_at <= date_to)
+    if tool_id:
+        q = q.filter(DOERun.tool_id == tool_id)
+    if recipe_id:
+        q = q.filter(DOERun.recipe_id == recipe_id)
+    if batch_id:
+        q = q.filter(DOERun.batch_id == batch_id)
+    runs = q.order_by(DOERun.created_at.desc()).limit(200).all()
+    out = []
+    for r in runs:
+        measurements = db.query(DOEMeasurement).filter(DOEMeasurement.run_id == r.id).all()
+        if metric_key and not any(m.metric_key == metric_key for m in measurements):
+            continue
+        out.append({
+            "run_id": r.run_id,
+            "tool_id": r.tool_id,
+            "recipe_id": r.recipe_id,
+            "batch_id": r.batch_id,
+            "started_at": r.started_at.isoformat() if r.started_at else None,
+            "factors": json.loads(r.factors_json) if r.factors_json else {},
+            "measurements": [{"metric_key": m.metric_key, "metric_value": m.metric_value} for m in measurements],
+        })
+    return {"runs": out}
+
+
+@router.get("/runs/{run_id}")
+async def get_doe_run(
+    run_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get single run detail for drawer."""
+    detail = get_run_detail(db, run_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return detail
+
+
+@router.post("/runs/import")
+async def import_doe_runs(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Import DOE runs from CSV. Columns: run_id, tool_id, recipe_id, batch_id, started_at, temp_c, rh_pct, [metric_key columns]."""
+    content = await file.read()
+    try:
+        text = content.decode("utf-8")
+    except Exception:
+        text = content.decode("latin-1")
+    reader = csv.DictReader(io.StringIO(text))
+    rows = list(reader)
+    if not rows:
+        return {"imported": 0, "message": "No rows"}
+    imported = 0
+    for row in rows:
+        run_id = (row.get("run_id") or row.get("id") or "").strip()
+        if not run_id:
+            continue
+        if db.query(DOERun).filter(DOERun.run_id == run_id).first():
+            continue
+        try:
+            started = None
+            if row.get("started_at"):
+                from dateutil import parser as date_parser
+                started = date_parser.parse(row["started_at"])
+        except Exception:
+            pass
+        factors = {"temp_c": float(row.get("temp_c", 0)), "rh_pct": float(row.get("rh_pct", 0))}
+        run = DOERun(
+            run_id=run_id,
+            tool_id=row.get("tool_id"),
+            recipe_id=row.get("recipe_id"),
+            batch_id=row.get("batch_id"),
+            started_at=started,
+            factors_json=json.dumps(factors),
+        )
+        db.add(run)
+        db.commit()
+        db.refresh(run)
+        for k, v in row.items():
+            if k in ("run_id", "tool_id", "recipe_id", "batch_id", "started_at", "temp_c", "rh_pct", "notes"):
+                continue
+            try:
+                val = float(v)
+            except (ValueError, TypeError):
+                continue
+            m = DOEMeasurement(run_id=run.id, metric_key=k, metric_value=val)
+            db.add(m)
+        db.commit()
+        imported += 1
+    return {"imported": imported, "total_rows": len(rows)}
+
+
+@router.get("/runs")
+async def list_doe_runs(
+    date_from: Optional[datetime] = Query(None),
+    date_to: Optional[datetime] = Query(None),
+    tool_id: Optional[str] = Query(None),
+    recipe_id: Optional[str] = Query(None),
+    batch_id: Optional[str] = Query(None),
+    metric_key: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List DOE runs with optional filters."""
+    q = db.query(DOERun)
+    if date_from:
+        q = q.filter(DOERun.started_at >= date_from)
+    if date_to:
+        q = q.filter(DOERun.started_at <= date_to)
+    if tool_id:
+        q = q.filter(DOERun.tool_id == tool_id)
+    if recipe_id:
+        q = q.filter(DOERun.recipe_id == recipe_id)
+    if batch_id:
+        q = q.filter(DOERun.batch_id == batch_id)
+    runs = q.order_by(DOERun.created_at.desc()).limit(200).all()
+    out = []
+    for r in runs:
+        measurements = db.query(DOEMeasurement).filter(DOEMeasurement.run_id == r.id).all()
+        if metric_key and not any(m.metric_key == metric_key for m in measurements):
+            continue
+        out.append({
+            "run_id": r.run_id,
+            "tool_id": r.tool_id,
+            "recipe_id": r.recipe_id,
+            "batch_id": r.batch_id,
+            "started_at": r.started_at.isoformat() if r.started_at else None,
+            "factors": json.loads(r.factors_json) if r.factors_json else {},
+            "measurements": [{"metric_key": m.metric_key, "metric_value": m.metric_value} for m in measurements],
+        })
+    return {"runs": out}
+
+
+@router.get("/runs/{run_id}")
+async def get_doe_run(
+    run_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get single run detail for drawer."""
+    detail = get_run_detail(db, run_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return detail
+
+
+@router.get("/analysis/main-effects")
+async def analysis_main_effects(
+    metric_key: str = Query(...),
+    factor_keys: Optional[str] = Query(None),  # comma-separated
+    n_bins: int = Query(3, ge=2, le=10),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Main effects: factor bins -> mean response."""
+    keys = [x.strip() for x in factor_keys.split(",")] if factor_keys else None
+    data = main_effects_data(db, metric_key, factor_keys=keys, n_bins=n_bins)
+    return {"metric_key": metric_key, "effects": data}
+
+
+@router.get("/analysis/interaction")
+async def analysis_interaction(
+    metric_key: str = Query(...),
+    factor_a: str = Query("temp_c"),
+    factor_b: str = Query("rh_pct"),
+    n_bins: int = Query(3, ge=2, le=10),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Interaction: factor_a x factor_b -> mean response matrix."""
+    data = interaction_data(db, metric_key, factor_a=factor_a, factor_b=factor_b, n_bins=n_bins)
+    return data
+
+
+@router.get("/analysis/importance")
+async def analysis_importance(
+    metric_key: str = Query(...),
+    factor_keys: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Factor importance (RF or correlation)."""
+    keys = [x.strip() for x in factor_keys.split(",")] if factor_keys else None
+    data = importance_data(db, metric_key, factor_keys=keys)
+    return {"metric_key": metric_key, "importance": data}

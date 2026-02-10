@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Database, Radio, HardDrive, Bell, X } from 'lucide-react';
 import { useProcessWindow } from '../features/settings/useProcessWindow';
-import { saveProcessWindow, saveAlarmThresholds, getAlarmThresholds } from '../features/settings/settings.api';
+import {
+  saveProcessWindow,
+  saveAlarmThresholds,
+  getAlarmThresholds,
+  getIntegrations,
+  getIntegration,
+  updateIntegration,
+  type IntegrationConfig,
+} from '../features/settings/settings.api';
+
+const INTEGRATION_META: { type: string; label: string; desc: string; icon: React.ElementType }[] = [
+  { type: 'database', label: 'Database', desc: 'MySQL / Postgres connection', icon: Database },
+  { type: 'streaming', label: 'Streaming', desc: 'WebSocket / Kafka / MQTT', icon: Radio },
+  { type: 'storage', label: 'Storage', desc: 'S3/GCS for reports and datasets', icon: HardDrive },
+  { type: 'notifications', label: 'Notifications', desc: 'Email/Slack for alarms', icon: Bell },
+];
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('process-window');
@@ -13,6 +28,10 @@ const SettingsPage: React.FC = () => {
     ewmaLambda: 0.2,
   });
   const [saving, setSaving] = useState(false);
+  const [integrations, setIntegrations] = useState<IntegrationConfig[]>([]);
+  const [integrationModal, setIntegrationModal] = useState<string | null>(null);
+  const [integrationConfigJson, setIntegrationConfigJson] = useState('{}');
+  const [integrationSaving, setIntegrationSaving] = useState(false);
 
   useEffect(() => {
     if (processWindowRows) {
@@ -31,6 +50,41 @@ const SettingsPage: React.FC = () => {
       })
       .catch((err) => console.error('Failed to load alarm thresholds:', err));
   }, []);
+
+  useEffect(() => {
+    getIntegrations()
+      .then(setIntegrations)
+      .catch(() => setIntegrations(INTEGRATION_META.map(m => ({ type: m.type, config_json: null }))));
+  }, []);
+
+  const openConfigure = (type: string) => {
+    setIntegrationModal(type);
+    getIntegration(type)
+      .then((c) => setIntegrationConfigJson(JSON.stringify(c.config_json || {}, null, 2)))
+      .catch(() => setIntegrationConfigJson('{}'));
+  };
+
+  const saveIntegrationConfig = async () => {
+    if (!integrationModal) return;
+    let config: Record<string, unknown>;
+    try {
+      config = JSON.parse(integrationConfigJson);
+    } catch {
+      alert('Invalid JSON');
+      return;
+    }
+    setIntegrationSaving(true);
+    try {
+      await updateIntegration(integrationModal, config);
+      setIntegrationModal(null);
+      getIntegrations().then(setIntegrations);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to save');
+    } finally {
+      setIntegrationSaving(false);
+    }
+  };
 
   const handleSaveProcessWindow = async () => {
     setSaving(true);
@@ -218,18 +272,72 @@ const SettingsPage: React.FC = () => {
       {/* Integrations Tab */}
       {activeTab === 'integrations' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[
-            { name: 'Database', desc: 'MySQL / Postgres connection' },
-            { name: 'Streaming', desc: 'WebSocket / Kafka / MQTT' },
-            { name: 'Storage', desc: 'S3/GCS for reports and datasets' },
-            { name: 'Notifications', desc: 'Email/Slack for alarms' },
-          ].map((integration) => (
-            <div key={integration.name} className="card">
-              <h3 className="font-bold text-white mb-2">{integration.name}</h3>
-              <p className="text-sm text-slate-400 mb-4">{integration.desc}</p>
-              <button className="btn-secondary">Configure</button>
+          {INTEGRATION_META.map((meta) => {
+            const configured = integrations.some((i) => i.type === meta.type);
+            const Icon = meta.icon;
+            return (
+              <div key={meta.type} className="card">
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon className="w-5 h-5 text-slate-400" />
+                  <h3 className="font-bold text-white">{meta.label}</h3>
+                  {configured && (
+                    <span className="text-xs bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded">Configured</span>
+                  )}
+                </div>
+                <p className="text-sm text-slate-400 mb-4">{meta.desc}</p>
+                <button
+                  type="button"
+                  onClick={() => openConfigure(meta.type)}
+                  className="btn-secondary"
+                >
+                  Configure
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Integration config modal */}
+      {integrationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setIntegrationModal(null)}>
+          <div
+            className="bg-slate-800 rounded-xl border border-slate-700 p-6 w-full max-w-lg shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">Configure {integrationModal}</h3>
+              <button
+                type="button"
+                onClick={() => setIntegrationModal(null)}
+                className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-white"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-          ))}
+            <textarea
+              value={integrationConfigJson}
+              onChange={(e) => setIntegrationConfigJson(e.target.value)}
+              className="w-full input-field font-mono text-sm min-h-[200px] mb-4"
+              placeholder="{}"
+              spellCheck={false}
+            />
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setIntegrationModal(null)} className="btn-secondary">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveIntegrationConfig}
+                disabled={integrationSaving}
+                className="btn-primary flex items-center gap-2 disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                {integrationSaving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

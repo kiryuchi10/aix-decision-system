@@ -40,8 +40,19 @@ const Login: React.FC = () => {
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg">
-                {error}
+              <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg space-y-2">
+                <p>{error}</p>
+                {error.includes('Cannot reach server') && (
+                  <ul className="text-sm text-slate-400 list-disc list-inside space-y-1">
+                    <li>Start backend: <code className="bg-black/30 px-1 rounded">cd backend</code> then <code className="bg-black/30 px-1 rounded">uvicorn app.main:app --reload</code></li>
+                    <li>Use proxy: in frontend <code className="bg-black/30 px-1 rounded">.env</code> remove <code className="bg-black/30 px-1 rounded">VITE_API_BASE_URL</code> (or set it empty), then restart <code className="bg-black/30 px-1 rounded">npm run dev</code></li>
+                  </ul>
+                )}
+                {!error.includes('Cannot reach server') && (
+                  <p className="text-sm text-slate-400">
+                    No account? Use <strong>Demo Login</strong> below or <Link to="/signup" className="text-cyan-400 hover:underline">Sign up</Link>.
+                  </p>
+                )}
               </div>
             )}
 

@@ -17,12 +17,13 @@ except ImportError as e:
         def get_available_models(self):
             return {}
     print(f"Warning: MLEnsembleService import failed: {e}")
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 router = APIRouter(prefix="/ml-pipeline", tags=["ML Pipeline"])
 
 # Schemas
 class ModelCombinationRequest(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
     experiment_id: str
     model_names: List[str]
 

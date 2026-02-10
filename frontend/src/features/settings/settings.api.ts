@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '../../app/apiClient';
+import { apiGet, apiPost, apiPut } from '../../app/apiClient';
 
 export type ProcessWindowRow = {
   key: string;
@@ -33,4 +33,25 @@ export function getAlarmThresholds() {
 
 export function saveAlarmThresholds(payload: AlarmThresholds) {
   return apiPost<AlarmThresholds, { ok: boolean }>('/settings/alarm-thresholds', payload);
+}
+
+export type IntegrationConfig = {
+  type: string;
+  config_json?: Record<string, unknown> | null;
+  updatedAt?: string | null;
+};
+
+export function getIntegrations() {
+  return apiGet<IntegrationConfig[]>('/settings/integrations');
+}
+
+export function getIntegration(type: string) {
+  return apiGet<IntegrationConfig>(`/settings/integrations/${encodeURIComponent(type)}`);
+}
+
+export function updateIntegration(type: string, config_json: Record<string, unknown>) {
+  return apiPut<{ config_json: Record<string, unknown> }, { ok: boolean }>(
+    `/settings/integrations/${encodeURIComponent(type)}`,
+    { config_json }
+  );
 }

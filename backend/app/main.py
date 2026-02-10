@@ -11,6 +11,7 @@ FastAPI entrypoint:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import os
 import random
@@ -25,7 +26,10 @@ from .core.database import engine, Base
 from .core.websocket_manager import WebSocketManager
 
 # Core routers (always present)
-from .routers import papers, datasets, seeds, generator, chat, auth, spc, viz, settings
+from .routers import papers, datasets, seeds, generator, chat, auth, spc, viz, settings, vpd
+# Ensure VPD/DOE run models are registered for create_all
+from .models import vpd as _vpd_models  # noqa: F401
+from .models import doe_run as _doe_run_models  # noqa: F401
 
 # Optional routers (may not exist)
 def _safe_import_router(module_path: str):
@@ -39,6 +43,7 @@ fdc_router = _safe_import_router("app.routers.fdc")
 doe_router = _safe_import_router("app.routers.doe")
 ml_router = _safe_import_router("app.routers.ml_pipeline")
 coupling_router = _safe_import_router("app.routers.coupling")
+interlock_router = _safe_import_router("app.routers.interlock")
 recommendations_router = _safe_import_router("app.routers.recommendations")
 data_management_router = _safe_import_router("app.routers.data_management")
 dashboard_router = _safe_import_router("app.routers.dashboard")
@@ -127,16 +132,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS (make this configurable later via settings)
+# CORS (include 127.0.0.1 so OPTIONS preflight from Vite works)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
     ],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Routers
@@ -149,6 +158,7 @@ app.include_router(chat.router, prefix="/api/v1")
 app.include_router(spc.router, prefix="/api/v1")
 app.include_router(viz.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
+app.include_router(vpd.router, prefix="/api/v1")
 
 # Optional routers
 if fdc_router:
@@ -160,6 +170,8 @@ if ml_router:
     app.include_router(ml_router, prefix="/api/v1")
 if coupling_router:
     app.include_router(coupling_router, prefix="/api/v1")
+if interlock_router:
+    app.include_router(interlock_router, prefix="/api/v1")
 if recommendations_router:
     app.include_router(recommendations_router, prefix="/api/v1")
 if data_management_router:
@@ -178,17 +190,13 @@ async def root():
     }
 
 
-@app.get("/health")
-async def health_check():
-    # 실제 DB ping (간단 체크)
+def _health_response():
     db_ok = True
     try:
-        # SQLAlchemy 2.0 style
         with engine.connect() as conn:
             conn.exec_driver_sql("SELECT 1")
     except Exception:
         db_ok = False
-
     return {
         "status": "healthy" if db_ok else "degraded",
         "timestamp": datetime.utcnow().isoformat(),
@@ -198,6 +206,22 @@ async def health_check():
             "ml_pipeline": "optional",
         },
     }
+
+
+@app.get("/health")
+async def health_check():
+    return _health_response()
+
+
+@app.get("/api/health")
+async def api_health_check():
+    return _health_response()
+
+
+@app.get("/api/v1/health")
+async def api_v1_health():
+    """No-auth health for frontend connectivity check (e.g. Viz Automation)."""
+    return {"ok": True, "status": "operational"}
 
 
 @app.websocket("/ws")
